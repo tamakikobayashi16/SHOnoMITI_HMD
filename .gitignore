@@ -6,7 +6,12 @@
 [Ll]ogs/
 UserSettings/
 MemoryCaptures/
+Assets/fonts/*.asset
 
+Assets/fonts/YU.asset
+Assets/fonts/KleeOne-Regular SDF.asset
+Assets/fonts/NotoSerifJP-Bold SDF.asset
+Assets/fonts/NotoSansJP-Medium SDF.asset
 # Visual Studio
 .vs/
 *.csproj
@@ -17,3 +22,4 @@ MemoryCaptures/
 # OS
 .DS_Store
 Thumbs.db
+
