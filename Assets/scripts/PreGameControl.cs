@@ -308,8 +308,11 @@ public class PreGameControl : MonoBehaviour
         tempContainer.transform.parent = this.transform;
     }
 
+    private RemotePracticeController remotePractice;
+
     void Start()
     {
+        if (PracticeMode.Remote) remotePractice = gameObject.AddComponent<RemotePracticeController>();
         var messageObj = GameObject.Find("Message");
         if (messageObj != null)
         {
@@ -374,11 +377,13 @@ public class PreGameControl : MonoBehaviour
             preCountdownBgmSource.Play();
         }
 
+        if (remotePractice != null) remotePractice.ConfigurePreview(moveArea);
         ShowMessage("初期化中...");
     }
 
     void Update()
     {
+        if (remotePractice != null && !remotePractice.Ready) return;
         bool gotDataThisFrame = false;
 
         switch (status)
@@ -684,6 +689,7 @@ public class PreGameControl : MonoBehaviour
                 else
                 {
                     ClearGhost();
+                    if (remotePractice != null) remotePractice.HideExample();
                     TriggerCompletionAnimations();
                     StartCoroutine(WaitAnimationsThenAwaitResultKey());
                     status = Status.FINISHED;
@@ -1016,6 +1022,7 @@ public class PreGameControl : MonoBehaviour
 
     void ShowGhostForCurrentChar()
     {
+        if (remotePractice != null) { ClearGhost(); remotePractice.ShowCharacter(currentPromptIndex, moveArea); return; }
         EnsureGhost();
 
         if (ghostTMP != null && !string.IsNullOrEmpty(currentPromptWord))
@@ -1444,6 +1451,7 @@ public class PreGameControl : MonoBehaviour
     // ========= 任意文字数入力をそのまま使用 =========
     void PrepareSingleRandomFruit()
     {
+        if (remotePractice != null) { sampleWords = new List<string> { new string('　', remotePractice.CharacterCount) }; return; }
         if (!string.IsNullOrEmpty(GlobalData.PromptWord))
         {
             sampleWords = new List<string>() { GlobalData.PromptWord.Trim() };

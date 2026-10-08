@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><EnableDefaultCompileItems>true</EnableDefaultCompileItems><LangVersion>9.0</LangVersion></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/scripts/RemoteInkReceiver.cs" Link="RemoteInkReceiver.cs" />
+    <Compile Include="../../Assets/scripts/RemotePracticeController.cs" Link="RemotePracticeController.cs" />
+    <Compile Include="../../Assets/scripts/PracticeMode.cs" Link="PracticeMode.cs" />
+    <Compile Include="../../Assets/Editor/RemoteInkProtocolChecks.cs" Link="RemoteInkProtocolChecks.cs" />
+  </ItemGroup>
+</Project>

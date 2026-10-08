@@ -35,6 +35,7 @@ public class TitleScreenController : MonoBehaviour
 
     private void Awake()
     {
+        PracticeMode.Remote = false;
         Application.targetFrameRate = 60;
         if (menuGroup != null)
         {
@@ -190,7 +191,27 @@ public class TitleScreenController : MonoBehaviour
     public void OnClickStart()
     {
         if (!introFinished || isTransitioning) return;
-        StartCoroutine(GoNextScene(nextSceneName));
+        PracticeMode.Remote = false;
+        GlobalData.PromptWord = null;
+        GlobalData.ResultPromptWord = null;
+        StartCoroutine(GoNextScene("PreGame"));
+    }
+
+    public void OnClickRemoteMode()
+    {
+        if (!introFinished || isTransitioning) return;
+        PracticeMode.Remote = true;
+        GlobalData.PromptWord = null;
+        GlobalData.ResultPromptWord = null;
+        StartCoroutine(GoNextScene("PreGame"));
+    }
+
+    private void OnGUI()
+    {
+        if (!introFinished || isTransitioning) return;
+        float x = Screen.width - 280;
+        if (GUI.Button(new Rect(x, 20, 260, 45), "Random practice")) OnClickStart();
+        if (GUI.Button(new Rect(x, 75, 260, 45), "Remote example (UDP)")) OnClickRemoteMode();
     }
 
     public void OnClickTutorial()
