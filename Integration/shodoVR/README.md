@@ -1,0 +1,10 @@
+# shodoVRのお手本完成ボタン
+
+現在のGitHub版PenPosiには、Enterキーと公開メソッド`FinishExperiment()`でUDPの`experimentEnd`を送る処理がある。この追加スクリプトは、その処理を呼ぶ「お手本完成」ボタンを画面右上に表示する。
+
+1. `ShodoTemplateCompletion.cs`を別PCのshodoVRプロジェクトのAssetsへコピーする。
+2. PenPosiが付いているGameObjectにShodoTemplateCompletionをアタッチする。Pen Drawing欄は同じオブジェクトのPenPosiが自動設定される。
+3. PenPosiのUdp SenderにDrawingUdpSenderを割り当て、体験者PCの現在のIPとポート5005を設定する。
+4. 最後の文字まで書いたらボタンまたはEnterを使う。体験者側は完成合図でRemotePreviewからRemoteGameへ自動遷移する。
+
+別PCのPenPosiに`FinishExperiment()`がない場合は、現在のGitHub版PenPosi.csへ更新してから追加する。このフォルダは取り込み用であり、別PCのshodoVRやそのGitHubリポジトリを直接変更したものではない。

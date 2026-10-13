@@ -10,10 +10,10 @@ using TMPro;
 using URandom = UnityEngine.Random;
 using UObject = UnityEngine.Object;
 
-public class PreGameControl : MonoBehaviour
+public partial class PreGameControl : MonoBehaviour
 {
     // ★ 状態
-    enum Status { INIT, CONNECTING, CONNECTED, WAIT_FOR_STAND, CALIBRATING, COUNTDOWN, READY_TO_WRITE, FINISHED }
+    enum Status { INIT, CONNECTING, CONNECTED, WAIT_FOR_STAND, CALIBRATING, WAIT_FOR_REMOTE, COUNTDOWN, READY_TO_WRITE, FINISHED }
     Status status = Status.INIT;
 
     RecvBB recv_bb;
@@ -357,6 +357,8 @@ public class PreGameControl : MonoBehaviour
         FreezeAnimatorAtStart(rightPanelAnimator);
         FreezeAnimatorAtStart(moveAreaAnimator);
 
+        if (useRemoteTemplate) InitializeRemoteTemplate();
+
         // タイマー初期化＆配置
         UpdateTimerUI();
         if (timerText != null && autoPlaceTimerAtTopCenter) PlaceTimerToTopCenter();
@@ -384,6 +386,12 @@ public class PreGameControl : MonoBehaviour
         switch (status)
         {
             case Status.INIT:
+                if (SkipBalanceBoard)
+                {
+                    status = Status.WAIT_FOR_REMOTE;
+                    ShowMessage("テストモード：バランスボードの接続を省略します。");
+                    break;
+                }
                 SetupOrReconnectBBIfNeeded();
                 status = Status.CONNECTING;
                 ShowMessage("バランスボードに接続しています...");
@@ -457,6 +465,12 @@ public class PreGameControl : MonoBehaviour
                     emaPressureInitialized = false;
 
                     // ★ カウントダウン前にお題を準備）
+                    if (useRemoteTemplate)
+                    {
+                        status = Status.WAIT_FOR_REMOTE;
+                        ShowMessage(useLocalTestTemplate ? "テストのお手本を準備しました。" : "遠隔者のお手本を受信しています。完成するまでお待ちください。");
+                        break;
+                    }
                     PrepareSingleRandomFruit();
                     SetupRandomPrompt();
 
@@ -479,6 +493,11 @@ public class PreGameControl : MonoBehaviour
                 }
                 break;
 
+            case Status.WAIT_FOR_REMOTE:
+                ProcessRecvBBQueue(ref gotDataThisFrame);
+                TryStartRemoteTracing();
+                break;
+
             case Status.COUNTDOWN:
                 ProcessRecvBBQueue(ref gotDataThisFrame);
                 break;
@@ -491,7 +510,7 @@ public class PreGameControl : MonoBehaviour
                 break;
         }
 
-        if (status != Status.FINISHED)
+        if (status != Status.FINISHED && !SkipBalanceBoard)
         {
             if (gotDataThisFrame) bbNoDataTimer = 0f;
             else bbNoDataTimer += Time.deltaTime;
@@ -1008,6 +1027,7 @@ public class PreGameControl : MonoBehaviour
 
     void ClearGhost()
     {
+        if (useRemoteTemplate && remoteTemplate != null) remoteTemplate.HideActiveCharacter();
         if (ghostGO != null) Destroy(ghostGO);
         ghostGO = null;
         ghostTMP = null;
@@ -1016,6 +1036,11 @@ public class PreGameControl : MonoBehaviour
 
     void ShowGhostForCurrentChar()
     {
+        if (useRemoteTemplate)
+        {
+            remoteTemplate.ShowCharacter(currentPromptIndex);
+            return;
+        }
         EnsureGhost();
 
         if (ghostTMP != null && !string.IsNullOrEmpty(currentPromptWord))
@@ -1526,7 +1551,7 @@ public class PreGameControl : MonoBehaviour
             TMP_Text tmp = slot.GetComponentInChildren<TMP_Text>();
             if (tmp != null)
             {
-                tmp.text = word[i].ToString();
+                tmp.text = useRemoteTemplate ? "" : word[i].ToString();
                 if (brushFont != null) tmp.font = brushFont;
                 tmp.enableWordWrapping = false;
                 tmp.alignment = TextAlignmentOptions.Center;

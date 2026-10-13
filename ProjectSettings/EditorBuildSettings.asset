@@ -41,4 +41,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/WorstResult2.unity
     guid: 7989413e7c164e84d88ce965b2b81eb7
+  - enabled: 1
+    path: Assets/Scenes/RemoteGame.unity
+    guid: 609e843f04124cc4ab2efce8739746cb
+  - enabled: 1
+    path: Assets/Scenes/RemotePreview.unity
+    guid: 06f6cbda0b4a4bc49f65cb3c0fb871d3
   m_configObjects: {}

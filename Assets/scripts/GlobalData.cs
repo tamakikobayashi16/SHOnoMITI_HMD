@@ -40,6 +40,7 @@ public static class GlobalData
     // ★ 追加：名前入力（お題）とResult受け渡し
     // InputName で設定 → PreGame が参照
     public static string PromptWord = null;
+    public static RemoteTemplateData RemoteTemplate = null;
 
     // PreGame で実際に出したお題（Result表示用に残す）
     public static string ResultPromptWord = null;

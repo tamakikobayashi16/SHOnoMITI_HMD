@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.003995701, g: 0.00021792622, b: 0.000000051515347, a: 1}
+  m_IndirectSpecularColor: {r: 0.0039957035, g: 0.00021792635, b: 0.000000051515347, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -565,7 +565,7 @@ MonoBehaviour:
   nameInput: {fileID: 1929930037}
   startButton: {fileID: 1656718556}
   messageText: {fileID: 0}
-  nextSceneName: PreGame
+  nextSceneName: RemotePreview
   twoCharsButton: {fileID: 1909960408}
   twoCharsSceneName: Game2
   twoCharsButtonLabel: "\u4E8C\u6587\u5B57"
@@ -1611,7 +1611,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u679C\u7269"
+  m_text: "\u9060\u9694\u304A\u624B\u672C\n"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: e5b6aebc4ac5c6c45b78b024672dbb28, type: 2}
   m_sharedMaterial: {fileID: -1562840645488020642, guid: e5b6aebc4ac5c6c45b78b024672dbb28, type: 2}

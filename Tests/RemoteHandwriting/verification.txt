@@ -1,0 +1,26 @@
+PASS: UDP socket opened
+PASS: real UDP point received
+PASS: point is not completion
+PASS: out-of-order packet waits
+PASS: previous character retained
+PASS: reordering recovered without loss
+PASS: first preview retained
+PASS: duplicate ignored
+PASS: redo clears only current character
+PASS: redrawn character restored
+PASS: large tracing guide created
+PASS: guide in front of paper
+Mapping check: bounds=Center: (0.00, 0.00, 3.00), Extents: (4.00, 3.50, 0.00) point=(-0.94, 0.00, 2.99)
+PASS: tablet coordinates mapped with aspect ratio preserved
+PASS: completion waits for earlier stroke packet
+PASS: completion received after ordered packets
+PASS: completed handwriting exported by character and stroke
+PASS: finished template frozen
+PASS: receiver lifecycle resets and releases socket
+PASS: missing UDP packet reported
+PASS: template restored after source receiver shutdown
+PASS: import copies coordinates independently
+PASS: test handwriting starts progressively
+PASS: test completes with both strokes preserved
+REMOTE_SMOKE_PASS: 23 checks
+PREVIEW_FLOW_PASS: progressive drawing, completion, automatic scene transition and 66 coordinates retained
