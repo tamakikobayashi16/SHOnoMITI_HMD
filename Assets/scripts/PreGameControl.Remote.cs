@@ -99,8 +99,11 @@ public partial class PreGameControl
         if (labels.Length < count) labels = labels.PadRight(count, '　');
         CreateRightSlotsForWord(labels.Substring(0, count));
         remoteTemplate.SetPreviewTargets(rightSlots);
-        SetActiveSlot(count - 1);
-        remoteTemplate.ShowCharacter(count - 1);
+        // Loading the completed word adds characters in sequence; keep the tracing selection
+        // on the first character instead of following the last character added.
+        int selected = Mathf.Clamp(currentPromptIndex, 0, count - 1);
+        SetActiveSlot(selected);
+        remoteTemplate.ShowCharacter(selected);
     }
 
     void TryStartRemoteTracing()

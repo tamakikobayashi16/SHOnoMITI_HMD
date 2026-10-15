@@ -2208,8 +2208,8 @@ public partial class PreGameControl : MonoBehaviour
             UpdateTimerUI();
             return;
         }
-        // 前の文字の残り秒をボーナスとして加算
-        charTimerSec = Mathf.Max(0.01f, perCharSeconds + Mathf.Max(0f, _nextBonusSeconds));
+        // Remote tracing gives every character the same time; do not carry unused time forward.
+        charTimerSec = Mathf.Max(0.01f, perCharSeconds + (useRemoteTemplate ? 0f : Mathf.Max(0f, _nextBonusSeconds)));
         _nextBonusSeconds = 0f;
         UpdateTimerUI();
     }

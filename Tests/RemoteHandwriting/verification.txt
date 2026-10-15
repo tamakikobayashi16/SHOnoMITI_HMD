@@ -38,6 +38,7 @@ PASS: both readiness acknowledgements start drawing
 PASS: receive failure stops teacher drawing
 PASS: retry creates a fresh trial and resets both readiness flags
 PASS: heartbeat loss stops drawing
+PASS: default initial wait stays open after an hour without a peer
 PASS: initial connection wait times out
 PASS: delayed handwriting from previous trial rejected
 PASS: new trial accepts sequence zero
@@ -47,7 +48,7 @@ PASS: metadata and completed template persisted
 PASS: existing trial recording cannot be overwritten
 PASS: failed duplicate open preserves previous records
 PASS: trace log records only accepted ink points and actual boundaries
-SESSION_SMOKE_PASS: 17 checks
+SESSION_SMOKE_PASS: 18 checks
 PREVIEW_FLOW_PASS: progressive drawing, completion, automatic scene transition and all five characters retained
 PASS: idle writing timeout blocks the live preview
 PASS: retry reloads preview and preserves interrupted trial

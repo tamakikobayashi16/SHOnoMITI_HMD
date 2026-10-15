@@ -51,6 +51,10 @@ public static class SessionSmoke
             }
             using (var waiting = new RemoteTrialLink(true, 0))
             {
+                waiting.BeginTrial(first, "あ");
+                typeof(RemoteTrialLink).GetField("openedAt", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(waiting, Time.realtimeSinceStartup - 3600f);
+                Check(!waiting.TimedOut, "default initial wait stays open after an hour without a peer");
                 waiting.InitialWaitSeconds = 0.001f;
                 waiting.BeginTrial(first, "あ");
                 Thread.Sleep(20);

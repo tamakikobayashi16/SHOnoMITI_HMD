@@ -659,7 +659,7 @@ MonoBehaviour:
   saveWMName: WM-2
   enableRemote3: 1
   remote3Name: WM-3
-  enablePerCharTimeLimit: 0
+  enablePerCharTimeLimit: 1
   perCharSeconds: 40
   timerText: {fileID: 1986415749}
   autoPlaceTimerAtTopCenter: 1

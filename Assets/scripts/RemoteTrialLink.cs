@@ -33,9 +33,12 @@ public sealed class RemoteTrialLink : IDisposable
     public string PeerError { get; private set; }
     public string Error { get; private set; }
     public float DisconnectSeconds = 5f;
-    public float InitialWaitSeconds = 20f;
+    // Zero disables the initial timeout; a peer may start at any later time.
+    public float InitialWaitSeconds = 0f;
     public bool Connected => lastSeen >= 0f && Time.realtimeSinceStartup - lastSeen < DisconnectSeconds;
-    public bool TimedOut => lastSeen < 0f ? Time.realtimeSinceStartup - openedAt > InitialWaitSeconds : !Connected;
+    public bool TimedOut => lastSeen < 0f
+        ? InitialWaitSeconds > 0f && Time.realtimeSinceStartup - openedAt > InitialWaitSeconds
+        : !Connected;
     public bool CanDraw => Connected && State.phase == "drawing" && State.teacherReady && State.hostReady;
     public int LocalPort => ((IPEndPoint)socket.Client.LocalEndPoint).Port;
 
