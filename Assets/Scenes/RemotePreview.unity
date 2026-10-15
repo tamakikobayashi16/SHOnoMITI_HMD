@@ -43,7 +43,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f84d1b78a3b04f9b8efc9dc3778feaa4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  useLocalTestTemplate: 1
+  useLocalTestTemplate: 0
   listenPort: 5005
   controlPort: 5006
   participantId:

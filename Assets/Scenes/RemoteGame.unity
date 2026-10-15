@@ -603,7 +603,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   movableObject: {fileID: 367310757}
   useRemoteTemplate: 1
-  useLocalTestTemplate: 1
+  useLocalTestTemplate: 0
   skipBalanceBoardInLocalTest: 1
   remoteListenPort: 5005
   remoteSourceHalfSize: {x: 1.92, y: 1.08}

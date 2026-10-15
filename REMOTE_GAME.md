@@ -4,7 +4,7 @@
 
 `InputName → RemotePreview → RemoteGame`。RemotePreviewで筆跡をリアルタイム表示し、`experimentEnd`受信後に約1秒間完成を表示して自動遷移する。筆跡の座標をGlobalData.RemoteTemplateにコピーし、RemoteGameで読み込む。前段シーンが破棄されても筆跡は残り、RemoteGameは再受信しない。
 
-現在はRemotePreviewの`Use Local Test Template`が有効。テスト文字「あいうえお」を1文字ずつ筆順に沿って少しずつ描き、完成後にRemoteGameへ進む。shodoVR受信に戻す際は**RemotePreviewManagerのこのチェック**を外す。前段から渡されるテスト／実受信の情報をRemoteGameが使うため、実受信時は通常どおりボードの準備を行い、テスト時だけ省略する。
+現在はRemotePreviewとRemoteGameの`Use Local Test Template`を無効にした本番設定。shodoVRからの接続と筆跡を待ち、実受信時は通常どおりバランスボードの準備を行う。テスト文字「あいうえお」に戻す場合は両シーンのこのチェックを有効にする。前段から渡されるテスト／実受信の情報をRemoteGameが使うため、テスト時だけボードの準備を省略できる。
 
 shodoVR側も接続確認に対応した`codex/remote-trial-session`ブランチへ更新する。別PCへの取り込み・実機確認は別途必要。追加のスクリプトアタッチは不要で、既存のPenPosiとDrawingUdpSenderを使う。
 
