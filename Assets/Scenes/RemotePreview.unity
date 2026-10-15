@@ -45,5 +45,9 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   useLocalTestTemplate: 1
   listenPort: 5005
+  controlPort: 5006
+  participantId:
+  drawingIdleTimeoutSeconds: 60
   nextSceneName: RemoteGame
   completedDisplaySeconds: 1
+  templateDisplayScale: 1.65

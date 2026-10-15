@@ -381,6 +381,9 @@ public partial class PreGameControl : MonoBehaviour
 
     void Update()
     {
+        if (!UpdateRemoteTrial()) return;
+        if (useRemoteTemplate && remoteTemplate != null)
+            remoteTemplate.displayScale = remoteTemplateDisplayScale;
         bool gotDataThisFrame = false;
 
         switch (status)
@@ -689,6 +692,8 @@ public partial class PreGameControl : MonoBehaviour
                 }
 
                 // ====== 次の文字 or 完了 ======
+                remoteTrial?.Recorder.Record("characterSaved", currentPromptIndex);
+                remoteTraceStroke = -1;
                 float bonusForNext = (enablePerCharTimeLimit) ? Mathf.Max(0f, charTimerSec) : 0f;
 
                 if (!string.IsNullOrEmpty(currentPromptWord) && currentPromptIndex < currentPromptWord.Length - 1)
@@ -706,6 +711,7 @@ public partial class PreGameControl : MonoBehaviour
                     TriggerCompletionAnimations();
                     StartCoroutine(WaitAnimationsThenAwaitResultKey());
                     status = Status.FINISHED;
+                    remoteTrial?.Phase("completed");
 
                     if (timerText != null) timerText.text = "";
                 }
@@ -911,6 +917,7 @@ public partial class PreGameControl : MonoBehaviour
 
     void OnDestroy()
     {
+        if (trailDrawer != null) trailDrawer.TraceRecorded -= RecordRemoteTrace;
         DetachWMHandler();
     }
 
@@ -1543,7 +1550,7 @@ public partial class PreGameControl : MonoBehaviour
                 if (slotSize.x > 0.0001f && slotSize.y > 0.0001f)
                 {
                     Vector3 scaleMul = new Vector3(moveSize.x / slotSize.x, moveSize.y / slotSize.y, 1f);
-                    scaleMul *= 0.35f;
+                    scaleMul *= useRemoteTemplate ? galleryThumbnailScale : 0.35f;
                     slot.transform.localScale = Vector3.Scale(slot.transform.localScale, scaleMul);
                 }
             }

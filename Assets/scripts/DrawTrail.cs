@@ -42,6 +42,7 @@ public class DrawTrail : MonoBehaviour
 
     private bool isDrawing = false;
     public bool IsDrawing => isDrawing;
+    public event System.Action<string, Vector3, float, float> TraceRecorded;
 
     // --- Glyph 管理 ---
     public void NextGlyph()
@@ -138,6 +139,7 @@ public class DrawTrail : MonoBehaviour
         }
 
         isDrawing = true;
+        TraceRecorded?.Invoke("strokeStarted", Vector3.zero, 0f, 0f);
     }
 
     public void UpdateStroke(Vector3 worldPos)
@@ -160,6 +162,7 @@ public class DrawTrail : MonoBehaviour
             t = Mathf.Clamp01(t);
             float w = Mathf.Lerp(minLineWidth, maxLineWidth, t);
             currentStrokeWidths.Add(w);
+            TraceRecorded?.Invoke("tracePoint", worldPos, pressureKg, w);
 
             currentLineRenderer.positionCount = currentStrokePoints.Count;
             currentLineRenderer.SetPosition(currentStrokePoints.Count - 1, worldPos);
@@ -183,6 +186,7 @@ public class DrawTrail : MonoBehaviour
     {
         if (!isDrawing) return;
         isDrawing = false;
+        TraceRecorded?.Invoke("strokeEnded", Vector3.zero, 0f, 0f);
 
         if (currentStrokePoints == null || currentStrokePoints.Count == 0)
         {
@@ -207,6 +211,7 @@ public class DrawTrail : MonoBehaviour
 
     public void ClearStrokes()
     {
+        TraceRecorded?.Invoke("traceCleared", Vector3.zero, 0f, 0f);
         foreach (var obj in strokeObjects)
         {
             if (obj != null) Destroy(obj);
@@ -221,6 +226,7 @@ public class DrawTrail : MonoBehaviour
 
     public void ClearTrail()
     {
+        TraceRecorded?.Invoke("traceCleared", Vector3.zero, 0f, 0f);
         ClearAllGlyphs();
     }
 

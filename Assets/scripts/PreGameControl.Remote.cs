@@ -4,14 +4,54 @@ public partial class PreGameControl
 {
     [Header("Remote handwriting (shodoVR PenTablet)")]
     public bool useRemoteTemplate;
-    [Tooltip("UDP受信の代わりに座標で作ったテスト文字「十」を表示します。")]
+    [Tooltip("UDP受信の代わりに座標で作ったテスト文字「あいうえお」を表示します。")]
     public bool useLocalTestTemplate;
     [Tooltip("ローカルのお手本テスト中だけ、バランスボードの接続とキャリブレーションを省略します。")]
     public bool skipBalanceBoardInLocalTest = true;
     bool SkipBalanceBoard => useRemoteTemplate && useLocalTestTemplate && skipBalanceBoardInLocalTest;
     public int remoteListenPort = 5005;
     public Vector2 remoteSourceHalfSize = new Vector2(1.92f, 1.08f);
+    [Tooltip("なぞるお手本の表示倍率。1が従来の大きさです。")]
+    [Range(0.5f, 2f)] public float remoteTemplateDisplayScale = 1.65f;
     RemoteHandwritingReceiver remoteTemplate;
+    RemoteTrialRuntime remoteTrial;
+    int remoteTraceStroke = -1;
+    bool remoteTraceStarted;
+    bool remoteRecordFailed;
+
+    [System.Serializable]
+    class TraceLayout
+    {
+        public float displayScale;
+        public Vector3 paperCenter, paperSize;
+    }
+
+    void RecordRemoteTrace(string kind, Vector3 point, float pressure, float width)
+    {
+        if (remoteTrial == null) return;
+        if (kind == "strokeStarted") remoteTraceStroke++;
+        remoteTrial.Recorder.Record(kind, currentPromptIndex, remoteTraceStroke, point, pressure, width: width);
+    }
+
+    bool UpdateRemoteTrial()
+    {
+        if (!useRemoteTemplate || remoteTrial == null) return true;
+        if (remoteTrial.Error != null)
+        {
+            if (!remoteRecordFailed) { remoteRecordFailed = true; remoteTrial.Phase("error", remoteTrial.Error); }
+            ShowMessage(remoteTrial.Error + " 記録先を確認して、やり直してください。");
+            return false;
+        }
+        if (status == Status.READY_TO_WRITE && !remoteTraceStarted)
+        {
+            remoteTraceStarted = true;
+            remoteTrial.Phase("tracing");
+            var renderer = moveArea != null ? moveArea.GetComponent<Renderer>() : null;
+            if (renderer != null) remoteTrial.Recorder.Record("traceLayout", detail: JsonUtility.ToJson(new TraceLayout {
+                displayScale = remoteTemplateDisplayScale, paperCenter = renderer.bounds.center, paperSize = renderer.bounds.size }));
+        }
+        return true;
+    }
 
     void InitializeRemoteTemplate()
     {
@@ -20,10 +60,20 @@ public partial class PreGameControl
         if (scenePaper != null) moveArea = paperObject = scenePaper;
         var completedTemplate = GlobalData.RemoteTemplate;
         GlobalData.RemoteTemplate = null;
+        if (completedTemplate == null && !useLocalTestTemplate)
+        {
+            RemoteTrialRuntime.RequestLivePreview = true;
+            UnityEngine.SceneManagement.SceneManager.LoadScene("RemotePreview");
+            return;
+        }
         if (completedTemplate != null) useLocalTestTemplate = completedTemplate.isLocalTest;
         currentPromptWord = completedTemplate != null ? (completedTemplate.promptWord ?? "")
-            : (useLocalTestTemplate ? "十" : (GlobalData.PromptWord ?? ""));
+            : (useLocalTestTemplate ? RemoteTestHandwriting.Word : (GlobalData.PromptWord ?? ""));
         currentPromptIndex = 0;
+        remoteTrial = RemoteTrialRuntime.Active;
+        if (remoteTrial == null || completedTemplate == null || remoteTrial.TrialId != completedTemplate.trialId)
+            remoteTrial = RemoteTrialRuntime.Begin(useLocalTestTemplate, 5006, currentPromptWord, "");
+        if (trailDrawer != null) trailDrawer.TraceRecorded += RecordRemoteTrace;
         var receiverObject = new GameObject("RemoteHandwriting");
         receiverObject.transform.SetParent(transform, false);
         receiverObject.SetActive(false);
@@ -32,11 +82,14 @@ public partial class PreGameControl
         remoteTemplate.receiveUdp = completedTemplate == null && !useLocalTestTemplate;
         remoteTemplate.sourceHalfSize = remoteSourceHalfSize;
         remoteTemplate.paper = moveArea;
+        remoteTemplate.displayScale = remoteTemplateDisplayScale;
         remoteTemplate.CharacterAdded += RefreshRemoteSlots;
         remoteTemplate.SetPreviewTargets(rightSlots);
         receiverObject.SetActive(true);
         if (completedTemplate != null) remoteTemplate.LoadTemplate(completedTemplate);
-        else if (useLocalTestTemplate) remoteTemplate.LoadTestCross();
+        else if (useLocalTestTemplate) remoteTemplate.LoadTestWord();
+        if (remoteTemplate.HasFinished)
+            remoteTrial.SaveTemplate(remoteTemplate.ExportTemplate(currentPromptWord, useLocalTestTemplate));
     }
 
     void RefreshRemoteSlots()

@@ -20,7 +20,7 @@ public static class PreviewFlowSmoke
         };
         EditorSettings.enterPlayModeOptionsEnabled = true;
         EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
-        deadline = EditorApplication.timeSinceStartup + 30;
+        deadline = EditorApplication.timeSinceStartup + 45;
         EditorApplication.update += Tick;
         EditorApplication.isPlaying = true;
     }
@@ -36,13 +36,20 @@ public static class PreviewFlowSmoke
         try
         {
             var data = GlobalData.RemoteTemplate;
-            if (data == null || !data.isLocalTest || data.promptWord != "十" || data.strokes.Count != 2)
+            if (data == null || !data.isLocalTest || data.promptWord != "あいうえお" || data.strokes.Count != 12)
                 throw new Exception("Completed template was not transferred.");
-            if (data.strokes[0].points.Count != 33 || data.strokes[1].points.Count != 33)
-                throw new Exception("Template coordinates were lost.");
+            int[] strokeCounts = new int[5];
+            foreach (var stroke in data.strokes)
+            {
+                if (stroke.character < 0 || stroke.character > 4 || stroke.points.Count < 2)
+                    throw new Exception("Template coordinates were lost.");
+                strokeCounts[stroke.character]++;
+            }
+            if (strokeCounts[0] != 3 || strokeCounts[1] != 2 || strokeCounts[2] != 2 || strokeCounts[3] != 2 || strokeCounts[4] != 3)
+                throw new Exception("Character stroke groups were lost.");
             if (UnityEngine.Object.FindObjectOfType<RemotePreviewController>() != null)
                 throw new Exception("Preview scene was not unloaded.");
-            Debug.Log("PREVIEW_FLOW_PASS: progressive drawing, completion, automatic scene transition and 66 coordinates retained");
+            Debug.Log("PREVIEW_FLOW_PASS: progressive drawing, completion, automatic scene transition and all five characters retained");
             EditorApplication.Exit(0);
         }
         catch (Exception e) { Debug.LogException(e); EditorApplication.Exit(1); }

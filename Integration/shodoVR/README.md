@@ -1,5 +1,7 @@
 # shodoVRのお手本完成ボタン
 
+接続確認・やり直し・試行記録を使う場合、shodoVRの`codex/remote-trial-session`へ更新する。通常はEnterで完成でき、この補助ボタンの取り込みは任意。新しいShodoTemplateCompletionは更新後のDrawingUdpSenderを前提とし、準備前は押せず、試行をやり直すと再び押せる。
+
 現在のGitHub版PenPosiには、Enterキーと公開メソッド`FinishExperiment()`でUDPの`experimentEnd`を送る処理がある。この追加スクリプトは、その処理を呼ぶ「お手本完成」ボタンを画面右上に表示する。
 
 1. `ShodoTemplateCompletion.cs`を別PCのshodoVRプロジェクトのAssetsへコピーする。

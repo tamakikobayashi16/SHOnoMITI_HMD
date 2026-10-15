@@ -607,19 +607,20 @@ MonoBehaviour:
   skipBalanceBoardInLocalTest: 1
   remoteListenPort: 5005
   remoteSourceHalfSize: {x: 1.92, y: 1.08}
+  remoteTemplateDisplayScale: 1.65
   moveArea: {fileID: 8378556065508927080, guid: 8d2564179519f29499cfd56c1df7ea74, type: 3}
   paperObject: {fileID: 8378556065508927080, guid: 8d2564179519f29499cfd56c1df7ea74, type: 3}
   sampleWords: []
   rightPanelParent: {fileID: 841066083}
   backgroundPrefab: {fileID: 6679367314865922125, guid: 9349684e5080dcf48a6f4daefbf79a7c, type: 3}
   brushFont: {fileID: 11400000, guid: 5a0f7fcb48885554d9dd57dc312b09f7, type: 2}
-  rightSlotSpacing: 2.5
+  rightSlotSpacing: 1.5
   galleryArea: {fileID: 1844862191}
   galleryParent: {fileID: 168315003}
   galleryStartLocalPos: {x: -6, y: 1, z: 0}
-  gallerySpacingY: 2.5
-  galleryThumbnailScale: 0.35
-  maxCharsPerGroup: 4
+  gallerySpacingY: 1.5
+  galleryThumbnailScale: 0.18
+  maxCharsPerGroup: 5
   deadZone: 0.02
   moveSpeed: 0.8
   emaAlpha: 0.2
@@ -632,7 +633,7 @@ MonoBehaviour:
   sampleTextPrefab: {fileID: 6134634969424258992, guid: 341e96b50156f2643a96a0fe16db86bf, type: 3}
   galleryStrokeZOffset: 3
   gallerySortingOrderBoost: 3000
-  gallerySavedScale: 0.35
+  gallerySavedScale: 0.18
   drawSubSteps: 5
   saveGlyphAsObject: 1
   scaleLineWidthInGallery: 1

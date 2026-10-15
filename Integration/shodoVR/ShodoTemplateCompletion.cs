@@ -7,6 +7,7 @@ public class ShodoTemplateCompletion : MonoBehaviour
     public PenPosi penDrawing;
     bool buttonPressed;
     Font font;
+    string trialId;
 
     void Awake()
     {
@@ -16,8 +17,10 @@ public class ShodoTemplateCompletion : MonoBehaviour
 
     void OnGUI()
     {
+        var sender = penDrawing != null ? penDrawing.udpSender : null;
+        if (sender != null && trialId != sender.TrialId) { trialId = sender.TrialId; buttonPressed = false; }
         var style = new GUIStyle(GUI.skin.button) { font = font, fontSize = 22 };
-        GUI.enabled = penDrawing != null && !buttonPressed;
+        GUI.enabled = penDrawing != null && !buttonPressed && (sender == null || sender.CanDraw);
         if (GUI.Button(new Rect(Screen.width - 260, 20, 240, 65),
             buttonPressed ? "完成を通知しました" : "お手本完成（Enter）", style))
         {

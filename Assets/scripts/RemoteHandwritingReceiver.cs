@@ -10,8 +10,15 @@ using UnityEngine;
 /// <summary>Receives shodoVR DrawingUdpSender version 1 PenTablet packets.</summary>
 public class RemoteHandwritingReceiver : MonoBehaviour
 {
+    public const int MaxCharacters = 5;
+    [Range(0.5f, 2f)] public float displayScale = 1f;
+    float previousDisplayScale = float.NaN;
     public int listenPort = 5005;
     public bool receiveUdp = true;
+    public string expectedSession;
+    public bool acceptRemotePackets = true;
+    public float LastPacketTime { get; private set; }
+    public event Action<Packet> PacketApplied;
     public GameObject paper;
     public Vector2 sourceHalfSize = new Vector2(1.92f, 1.08f);
     public float sourceLineWidth = 0.03f;
@@ -40,6 +47,7 @@ public class RemoteHandwritingReceiver : MonoBehaviour
     readonly ConcurrentQueue<string> incoming = new ConcurrentQueue<string>();
     readonly SortedDictionary<int, Packet> pending = new SortedDictionary<int, Packet>();
     readonly Dictionary<string, Stroke> strokes = new Dictionary<string, Stroke>();
+    readonly Dictionary<int, Bounds> completedBounds = new Dictionary<int, Bounds>();
     List<GameObject> previewTargets = new List<GameObject>();
     UdpClient socket;
     Thread worker;
@@ -91,7 +99,18 @@ public class RemoteHandwritingReceiver : MonoBehaviour
 
     void Update()
     {
+        if (previousDisplayScale != displayScale)
+        {
+            previousDisplayScale = displayScale;
+            foreach (var stroke in strokes.Values)
+            {
+                if (stroke.preview != null) stroke.preview.positionCount = 0;
+                if (stroke.active != null) stroke.active.positionCount = 0;
+                DrawStroke(stroke);
+            }
+        }
         if (receiveError != null) Error = receiveError;
+        if (receiveUdp && !acceptRemotePackets) return;
         for (int i = 0; i < 1000 && incoming.TryDequeue(out var json); i++) QueuePacket(json);
         // Briefly wait for reordered packets before treating a sequence gap as loss.
         while (pending.Count > 0 && !HasFinished)
@@ -131,6 +150,7 @@ public class RemoteHandwritingReceiver : MonoBehaviour
             packet.eventType != "clearCharacter" && packet.eventType != "nextCharacter" &&
             packet.eventType != "experimentEnd") return;
         if (!Finite(packet.x) || !Finite(packet.y) || !Finite(packet.z)) return;
+        if (!string.IsNullOrEmpty(expectedSession) && packet.session != expectedSession) return;
         if (session == null) session = packet.session;
         if (packet.session != session || packet.sequence < nextSequence) return;
         if (pending.Count < 10000) pending[packet.sequence] = packet;
@@ -138,13 +158,22 @@ public class RemoteHandwritingReceiver : MonoBehaviour
 
     void ApplyPacket(Packet packet)
     {
+        LastPacketTime = Time.realtimeSinceStartup;
+        PacketApplied?.Invoke(packet);
         if (packet.eventType == "experimentEnd")
         {
+            for (int i = 0; i < CharacterCount; i++) CompleteCharacter(i);
             HasFinished = true;
+            return;
+        }
+        if (packet.eventType == "nextCharacter")
+        {
+            CompleteCharacter(packet.character - 1);
             return;
         }
         if (packet.eventType == "clearCharacter")
         {
+            completedBounds.Remove(packet.character);
             foreach (var key in new List<string>(strokes.Keys))
             {
                 Stroke stroke = strokes[key];
@@ -156,6 +185,11 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         }
         // nextCharacter advances the sender's index; retain all previous handwriting.
         if (packet.eventType != "point") return;
+        if (packet.character >= MaxCharacters)
+        {
+            Error = "お手本は最大5文字です。5文字以内で書き直してください。";
+            return;
+        }
         if (packet.character >= CharacterCount)
         {
             CharacterCount = packet.character + 1;
@@ -176,24 +210,34 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         DrawStroke(current);
     }
 
-    /// <summary>Local coordinate sample using the same stroke rendering as received packets.</summary>
-    public void LoadTestCross()
+    // Only fit at a character boundary, so incoming points never move existing ink.
+    void CompleteCharacter(int character)
     {
-        if (receiveUdp || HasFinished || CharacterCount != 0)
-            throw new InvalidOperationException("Load the local sample before receiving any handwriting, with receiveUdp disabled.");
-        for (int stroke = 0; stroke < 2; stroke++)
+        if (character < 0 || completedBounds.ContainsKey(character)) return;
+        Bounds bounds = new Bounds();
+        bool found = false;
+        foreach (var stroke in strokes.Values)
+            if (stroke.character == character)
+                foreach (var point in stroke.points)
+                {
+                    if (!found) { bounds = new Bounds(point, Vector3.zero); found = true; }
+                    else bounds.Encapsulate(point);
+                }
+        if (!found) return;
+        completedBounds.Add(character, bounds);
+        foreach (var stroke in strokes.Values)
         {
-            for (int i = 0; i <= 32; i++)
-            {
-                float t = i / 32f;
-                ApplyPacket(new Packet {
-                    eventType = "point", character = 0, stroke = stroke,
-                    x = stroke == 0 ? Mathf.Lerp(-0.8f, 0.8f, t) : 0f,
-                    y = stroke == 0 ? 0.2f : Mathf.Lerp(0.8f, -0.8f, t)
-                });
-            }
+            if (stroke.character != character) continue;
+            if (stroke.preview != null) stroke.preview.positionCount = 0;
+            if (stroke.active != null) stroke.active.positionCount = 0;
+            DrawStroke(stroke);
         }
-        ApplyPacket(new Packet { eventType = "experimentEnd" });
+    }
+
+    /// <summary>Local coordinate sample using the same stroke rendering as received packets.</summary>
+    public void LoadTestWord()
+    {
+        LoadTemplate(RemoteTestHandwriting.Create());
     }
 
     public RemoteTemplateData ExportTemplate(string promptWord, bool isLocalTest)
@@ -225,18 +269,23 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         ApplyPacket(new Packet { eventType = "experimentEnd" });
     }
 
-    public System.Collections.IEnumerator ReplayTestCross(float secondsPerPoint = 0.035f)
+    public System.Collections.IEnumerator ReplayTestWord(float secondsPerPoint = 0.02f)
     {
         if (receiveUdp || HasFinished || CharacterCount != 0)
             throw new InvalidOperationException("Replay the local sample in a new receiver with UDP disabled.");
-        for (int stroke = 0; stroke < 2; stroke++)
+        int previousCharacter = -1;
+        foreach (var stroke in RemoteTestHandwriting.Create().strokes)
         {
-            for (int i = 0; i <= 32; i++)
+            if (previousCharacter >= 0 && previousCharacter != stroke.character)
             {
-                float t = i / 32f;
-                ApplyPacket(new Packet { eventType = "point", character = 0, stroke = stroke,
-                    x = stroke == 0 ? Mathf.Lerp(-0.8f, 0.8f, t) : 0f,
-                    y = stroke == 0 ? 0.2f : Mathf.Lerp(0.8f, -0.8f, t) });
+                ApplyPacket(new Packet { eventType = "nextCharacter", character = stroke.character });
+                yield return new WaitForSeconds(0.5f);
+            }
+            previousCharacter = stroke.character;
+            foreach (var point in stroke.points)
+            {
+                ApplyPacket(new Packet { eventType = "point", character = stroke.character,
+                    stroke = stroke.stroke, x = point.x, y = point.y });
                 yield return new WaitForSeconds(Mathf.Max(0.001f, secondsPerPoint));
             }
             yield return new WaitForSeconds(0.25f);
@@ -290,12 +339,12 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         if (stroke.character < previewTargets.Count && previewTargets[stroke.character] != null)
         {
             if (stroke.preview == null) stroke.preview = CreateLine(previewTargets[stroke.character].transform, Color.black);
-            UpdateLine(stroke.preview, stroke.points, previewTargets[stroke.character]);
+            UpdateLine(stroke.preview, stroke, previewTargets[stroke.character]);
         }
         if (stroke.character == activeCharacter && paper != null)
         {
             if (stroke.active == null) stroke.active = CreateLine(transform, guideColor);
-            UpdateLine(stroke.active, stroke.points, paper);
+            UpdateLine(stroke.active, stroke, paper);
         }
     }
 
@@ -313,12 +362,23 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         return line;
     }
 
-    void UpdateLine(LineRenderer line, List<Vector3> points, GameObject target)
+    void UpdateLine(LineRenderer line, Stroke stroke, GameObject target)
     {
+        var points = stroke.points;
         var renderer = target.GetComponent<Renderer>();
         Bounds bounds = renderer != null ? renderer.bounds : new Bounds(target.transform.position, Vector3.one);
         float scale = Mathf.Min(bounds.size.x / (2f * Mathf.Max(0.001f, sourceHalfSize.x)),
-            bounds.size.y / (2f * Mathf.Max(0.001f, sourceHalfSize.y))) * 0.9f;
+            bounds.size.y / (2f * Mathf.Max(0.001f, sourceHalfSize.y))) * 0.9f * Mathf.Clamp(displayScale, 0.5f, 2f);
+        Vector3 sourceCenter = Vector3.zero;
+        if (completedBounds.TryGetValue(stroke.character, out var inkBounds))
+        {
+            sourceCenter = inkBounds.center;
+            // Include the round stroke caps and leave a 5% margin on every edge.
+            float width = Mathf.Max(0.001f, sourceLineWidth);
+            float fit = Mathf.Min(bounds.size.x / (inkBounds.size.x + width),
+                bounds.size.y / (inkBounds.size.y + width));
+            scale = fit * 0.9f * Mathf.Clamp(displayScale / 1.65f, 0.1f, 1f);
+        }
         var center = bounds.center;
         // The scene camera looks along +Z. Keep guides behind the learner's ink.
         center.z = bounds.min.z - 0.015f;
@@ -326,7 +386,7 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         int first = line.positionCount;
         // Existing points do not move while the remote person writes.
         line.positionCount = points.Count;
-        for (int i = first; i < points.Count; i++) line.SetPosition(i, center + points[i] * scale);
+        for (int i = first; i < points.Count; i++) line.SetPosition(i, center + (points[i] - sourceCenter) * scale);
     }
 
     static bool Finite(float value) { return !float.IsNaN(value) && !float.IsInfinity(value); }
@@ -347,6 +407,7 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         pending.Clear();
         foreach (var stroke in strokes.Values) DestroyLines(stroke);
         strokes.Clear();
+        completedBounds.Clear();
         if (material != null) Destroy(material);
         session = null;
         nextSequence = CharacterCount = 0;
@@ -354,5 +415,6 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         gapSince = -1f;
         HasFinished = false;
         Error = receiveError = null;
+        LastPacketTime = 0f;
     }
 }

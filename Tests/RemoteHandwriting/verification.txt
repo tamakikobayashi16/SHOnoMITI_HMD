@@ -10,17 +10,48 @@ PASS: redo clears only current character
 PASS: redrawn character restored
 PASS: large tracing guide created
 PASS: guide in front of paper
-Mapping check: bounds=Center: (0.00, 0.00, 3.00), Extents: (4.00, 3.50, 0.00) point=(-0.94, 0.00, 2.99)
 PASS: tablet coordinates mapped with aspect ratio preserved
+PASS: live scale adjustment updates existing handwriting
 PASS: completion waits for earlier stroke packet
 PASS: completion received after ordered packets
+PASS: last character centered at completion
 PASS: completed handwriting exported by character and stroke
 PASS: finished template frozen
 PASS: receiver lifecycle resets and releases socket
 PASS: missing UDP packet reported
+PASS: advance after fifth character is allowed
+PASS: sixth character is rejected
 PASS: template restored after source receiver shutdown
 PASS: import copies coordinates independently
+PASS: stroke end does not fit an unfinished character
+PASS: large offset handwriting fits paper at character completion
+PASS: completed handwriting is centered
+PASS: redo after fitting accepts fresh handwriting
 PASS: test handwriting starts progressively
-PASS: test completes with both strokes preserved
-REMOTE_SMOKE_PASS: 23 checks
-PREVIEW_FLOW_PASS: progressive drawing, completion, automatic scene transition and 66 coordinates retained
+PASS: five-character sample completes with all twelve strokes preserved
+REMOTE_SMOKE_PASS: 31 checks
+PASS: bidirectional UDP heartbeat connects both PCs
+PASS: trial ID and prompt shared
+PASS: drawing blocked until both ready
+PASS: teacher readiness alone cannot start drawing
+PASS: both readiness acknowledgements start drawing
+PASS: receive failure stops teacher drawing
+PASS: retry creates a fresh trial and resets both readiness flags
+PASS: heartbeat loss stops drawing
+PASS: initial connection wait times out
+PASS: delayed handwriting from previous trial rejected
+PASS: new trial accepts sequence zero
+PASS: both roles save records under matching trial ID
+PASS: saved trace retains trial, coordinates and line width
+PASS: metadata and completed template persisted
+PASS: existing trial recording cannot be overwritten
+PASS: failed duplicate open preserves previous records
+PASS: trace log records only accepted ink points and actual boundaries
+SESSION_SMOKE_PASS: 17 checks
+PREVIEW_FLOW_PASS: progressive drawing, completion, automatic scene transition and all five characters retained
+PASS: idle writing timeout blocks the live preview
+PASS: retry reloads preview and preserves interrupted trial
+PASS: lost completion packet is retried and scene transfer succeeds
+SESSION_FLOW_PASS: actual sender + receiver, readiness, idle timeout, retry, paired recordings and template transfer
+COMPILE_PASS: learner Assets C# (Unity 2021.3.4f1 references; existing warnings only)
+COMPILE_PASS: shodoVR Unity 2022.3.62f2 batch import, exit 0
