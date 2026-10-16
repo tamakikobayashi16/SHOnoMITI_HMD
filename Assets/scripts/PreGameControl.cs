@@ -630,10 +630,11 @@ public partial class PreGameControl : MonoBehaviour
 
             if (wmBUp || Input.GetKeyUp(KeyCode.Space)) trailDrawer.EndStroke();
 
-            // ====== 保存要求（WM-2のB / WM-4のB / Enter / Tab か、時間切れ） ====== 
+            // ====== 保存要求（WM-2のB / WM-4のB / Enter / テンキーEnter / Tab か、時間切れ） ======
             bool timedOutSave = enablePerCharTimeLimit && (charTimerSec <= 0f);
             bool requestSave = wmADown
                                || Input.GetKeyDown(KeyCode.Return)
+                               || Input.GetKeyDown(KeyCode.KeypadEnter)
                                || Input.GetKeyDown(KeyCode.Tab)
                                || timedOutSave;
 
