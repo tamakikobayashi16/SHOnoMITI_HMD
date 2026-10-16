@@ -58,3 +58,4 @@ SESSION_FLOW_PASS: actual sender + receiver, readiness, idle timeout, retry, pai
 COMPILE_PASS: learner Assets C# (Unity 2021.3.4f1 references; existing warnings only)
 COMPILE_PASS: shodoVR Unity 2022.3.62f2 batch import, exit 0
 PREVIEW_DESIGN_PASS: rendered Japanese-style preview inspected; footer and buttons kept within central panel; five-character transition passed
+REMOTE_GAME_PREVIEW_PASS: copied RemoteGame scene assets; rendered wood material, centered paper, five thumbnails and Japanese UI visually verified; C# compilation and five-character automatic transition passed (2026-10-16).

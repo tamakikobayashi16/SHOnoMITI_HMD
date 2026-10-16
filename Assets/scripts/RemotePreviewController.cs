@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
+using UnityEngine.UI;
 
 [DefaultExecutionOrder(-50)]
 public class RemotePreviewController : MonoBehaviour
@@ -21,16 +23,14 @@ public class RemotePreviewController : MonoBehaviour
     readonly List<GameObject> previews = new List<GameObject>();
     string promptWord, message;
     bool transitioning;
-    Material paperMaterial;
-    Font uiFont;
+    public GameObject backgroundPrefab;
+    public Transform rightPanelParent;
+    public GameObject galleryArea;
+    public TMP_Text headingText, statusText;
     RemoteTrialRuntime trial;
     bool failed, drawingStarted;
     float drawingStartedAt;
-    Camera previewCamera;
-    readonly List<Material> decorationMaterials = new List<Material>();
-    readonly List<GameObject> slotMarks = new List<GameObject>();
-    static readonly Color Ink = new Color(0.19f, 0.16f, 0.12f);
-    static readonly Color Vermilion = new Color(0.62f, 0.20f, 0.15f);
+    Button readyButton, retryButton;
 
     void Start()
     {
@@ -38,30 +38,35 @@ public class RemotePreviewController : MonoBehaviour
         { useLocalTestTemplate = false; RemoteTrialRuntime.RequestLivePreview = false; }
         GlobalData.RemoteTemplate = null;
         promptWord = useLocalTestTemplate ? RemoteTestHandwriting.Word : (GlobalData.PromptWord ?? "");
-        var cameraObject = new GameObject("Main Camera");
-        cameraObject.tag = "MainCamera";
-        var camera = cameraObject.AddComponent<Camera>();
-        previewCamera = camera;
-        camera.orthographic = true;
-        camera.orthographicSize = 5f;
-        camera.clearFlags = CameraClearFlags.SolidColor;
-        camera.backgroundColor = new Color(0.91f, 0.87f, 0.77f);
-        camera.transform.position = new Vector3(0f, 0f, -7f);
-        paperMaterial = new Material(Shader.Find("Unlit/Color"));
-        paperMaterial.color = new Color(0.99f, 0.98f, 0.94f);
-        uiFont = Font.CreateDynamicFontFromOSFont(new[] { "Yu Mincho", "MS Mincho", "Yu Gothic", "Arial" }, 24);
-        BuildJapaneseBackdrop();
-        AddPanel("PaperShadow", new Vector3(-1.34f, -0.07f, 3.10f), new Vector2(7.44f, 6.64f), new Color(0.66f, 0.60f, 0.48f));
-        AddPanel("PaperBorder", new Vector3(-1.4f, 0f, 3.05f), new Vector2(7.36f, 6.56f), new Color(0.34f, 0.25f, 0.16f));
-        var paper = CreatePaper("LiveTemplatePaper", new Vector3(-1.4f, 0f, 3f), new Vector2(7.2f, 6.4f));
+        // Reuse RemoteGame's scene camera, room, paper and thumbnail prefab.
+        var paper = GameObject.Find("MoveArea");
+        // The copied paper was parented to the overlay Canvas with a 1920x1080 offset.
+        // Keep its original world-space size independently of the preview window size.
+        paper.transform.SetParent(null, false);
+        paper.transform.position = new Vector3(0f, 0f, 3f);
+        // Freeze only the gameplay exit animations, just as RemoteGame does.
+        // The room's sliding doors and camera keep their normal opening animation.
+        foreach (var target in new[] { paper, rightPanelParent.gameObject, galleryArea })
+        {
+            var animator = target.GetComponent<Animator>();
+            if (animator == null) continue;
+            animator.Update(0f);
+            animator.enabled = false;
+        }
+        BuildInterface();
+        var paperSize = paper.GetComponent<Renderer>().bounds.size;
+        float top = galleryArea.GetComponent<Renderer>().bounds.max.y;
         for (int i = 0; i < RemoteHandwritingReceiver.MaxCharacters; i++)
         {
-            float y = 2.65f - i * 1.3f;
-            AddPanel("PreviewFrame_" + i, new Vector3(4f, y, 3.05f), new Vector2(1.12f, 1.12f), new Color(0.57f, 0.46f, 0.32f));
-            previews.Add(CreatePaper("CharacterPreview_" + i, new Vector3(4f, y, 3f), new Vector2(1.04f, 1.04f)));
-            var mark = AddPanel("SelectedCharacter_" + i, new Vector3(3.28f, y, 2.98f), new Vector2(0.045f, 1.12f), Vermilion);
-            mark.SetActive(false);
-            slotMarks.Add(mark);
+            var slot = Instantiate(backgroundPrefab, rightPanelParent, false);
+            slot.name = "CharacterPreview_" + i;
+            slot.transform.position = new Vector3(rightPanelParent.position.x, top - i * 1.5f, rightPanelParent.position.z);
+            slot.transform.rotation = rightPanelParent.rotation;
+            var size = slot.GetComponent<Renderer>().bounds.size;
+            slot.transform.localScale = Vector3.Scale(slot.transform.localScale,
+                new Vector3(paperSize.x / size.x, paperSize.y / size.y, 1f) * 0.18f);
+            foreach (var text in slot.GetComponentsInChildren<TMP_Text>()) text.text = "";
+            previews.Add(slot);
         }
         var receiveObject = new GameObject("RemoteHandwriting");
         receiveObject.SetActive(false);
@@ -90,45 +95,65 @@ public class RemotePreviewController : MonoBehaviour
         if (useLocalTestTemplate) StartCoroutine(PlayTest());
     }
 
-    GameObject CreatePaper(string name, Vector3 position, Vector2 size)
+    void BuildInterface()
     {
-        var paper = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        paper.name = name;
-        paper.transform.position = position;
-        paper.transform.localScale = new Vector3(size.x, size.y, 1f);
-        paper.GetComponent<Renderer>().sharedMaterial = paperMaterial;
-        return paper;
+        ConfigureText(headingText, new Vector2(0.5f, 1f), new Vector2(0, -55), new Vector2(1100, 80), 48);
+        ConfigureText(statusText, new Vector2(0.5f, 0f), new Vector2(0, 115), new Vector2(1500, 90), 30);
+        readyButton = CreateButton("準備完了", new Vector2(-140, 40), () => {
+            if (trial?.Link == null || !trial.Link.Connected || failed || transitioning) return;
+            trial.Link.LocalReady = true;
+            trial.Recorder.Record("learnerReady", detail: "ready to observe; balance board calibration follows template completion");
+        });
+        retryButton = CreateButton("やり直す", new Vector2(140, 40), Retry);
     }
 
-    GameObject AddPanel(string name, Vector3 position, Vector2 size, Color color)
+    void ConfigureText(TMP_Text text, Vector2 anchor, Vector2 position, Vector2 size, float fontSize)
     {
-        var material = new Material(Shader.Find("Unlit/Color")) { color = color };
-        decorationMaterials.Add(material);
-        var panel = CreatePaper(name, position, size);
-        panel.GetComponent<Renderer>().sharedMaterial = material;
-        Destroy(panel.GetComponent<Collider>());
-        return panel;
+        text.gameObject.SetActive(true);
+        text.enabled = true;
+        text.rectTransform.anchorMin = text.rectTransform.anchorMax = anchor;
+        text.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        text.rectTransform.anchoredPosition = position;
+        text.rectTransform.sizeDelta = size;
+        text.fontSize = fontSize;
+        text.enableAutoSizing = false;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+        text.outlineColor = Color.black;
+        text.outlineWidth = 0.2f;
+        text.raycastTarget = false;
+        text.rectTransform.SetAsLastSibling();
     }
 
-    void BuildJapaneseBackdrop()
+    Button CreateButton(string label, Vector2 position, UnityEngine.Events.UnityAction action)
     {
-        var wood = new Color(0.39f, 0.29f, 0.18f);
-        // Shoji lattice at the sides leaves the writing surface free of decoration.
-        for (int side = -1; side <= 1; side += 2)
-        {
-            AddPanel("ShojiPaper", new Vector3(side * 9f, 0, 4.5f), new Vector2(6f, 12f), new Color(0.84f, 0.79f, 0.66f));
-            for (int i = 0; i < 7; i++)
-                AddPanel("ShojiVertical", new Vector3(side * (6f + i), 0, 4.4f), new Vector2(0.045f, 12f), wood);
-            for (int i = -5; i <= 5; i++)
-                AddPanel("ShojiHorizontal", new Vector3(side * 9f, i, 4.4f), new Vector2(6f, 0.045f), wood);
-        }
-        AddPanel("HeadingRule", new Vector3(-0.3f, 3.72f, 4f), new Vector2(10.2f, 0.018f), new Color(0.61f, 0.50f, 0.35f));
-        AddPanel("FooterRule", new Vector3(-0.3f, -3.66f, 4f), new Vector2(10.2f, 0.018f), new Color(0.61f, 0.50f, 0.35f));
+        var go = new GameObject(label, typeof(RectTransform), typeof(Image), typeof(Button));
+        go.transform.SetParent(statusText.transform.parent, false);
+        var rect = (RectTransform)go.transform;
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0f);
+        rect.anchoredPosition = position;
+        rect.sizeDelta = new Vector2(240, 60);
+        go.GetComponent<Image>().color = new Color(0, 0, 0, 0.65f);
+        var button = go.GetComponent<Button>();
+        button.onClick.AddListener(action);
+        var text = Instantiate(headingText, go.transform);
+        ConfigureText(text, new Vector2(0.5f, 0.5f), Vector2.zero, rect.sizeDelta, 30);
+        text.text = label;
+        return button;
+    }
+
+    void LateUpdate()
+    {
+        if (headingText == null) return;
+        headingText.text = "遠隔のお手本" + (receiver != null && receiver.CharacterCount > 0 ? "　" + receiver.CharacterCount + "文字目" : "");
+        statusText.text = message ?? "準備中…";
+        readyButton.gameObject.SetActive(!useLocalTestTemplate && !failed && !transitioning &&
+            trial?.Link != null && trial.Link.Connected && !trial.Link.LocalReady);
+        retryButton.gameObject.SetActive(!transitioning);
     }
 
     void CharacterAdded()
     {
-        for (int i = 0; i < slotMarks.Count; i++) slotMarks[i].SetActive(i == receiver.CharacterCount - 1);
         receiver.ShowCharacter(receiver.CharacterCount - 1);
         message = $"お手本の{receiver.CharacterCount}文字目を書いています…";
     }
@@ -141,7 +166,6 @@ public class RemotePreviewController : MonoBehaviour
 
     void Update()
     {
-        if (previewCamera != null) previewCamera.orthographicSize = Mathf.Max(5f, 5.8f / previewCamera.aspect);
         if (receiver == null || transitioning) return;
         receiver.displayScale = templateDisplayScale;
         receiver.lineWidthMultiplier = templateLineWidthMultiplier;
@@ -221,65 +245,4 @@ public class RemotePreviewController : MonoBehaviour
         SceneManager.LoadScene(nextSceneName);
     }
 
-    void OnGUI()
-    {
-        if (previewCamera == null) return;
-        float scale = Mathf.Min(Screen.width / 1280f, Screen.height / 900f);
-        var style = new GUIStyle(GUI.skin.label) { font = uiFont, fontSize = Mathf.Max(14, Mathf.RoundToInt(23 * scale)),
-            alignment = TextAnchor.MiddleLeft, wordWrap = true };
-        style.normal.textColor = Ink;
-        var title = new GUIStyle(style) { fontSize = Mathf.Max(22, Mathf.RoundToInt(38 * scale)) };
-        LabelWorld(new Vector3(-5.08f, 4.33f, 3), "遠隔のお手本", title, 620 * scale, 60 * scale);
-        var subtitle = new GUIStyle(style) { fontSize = Mathf.Max(12, Mathf.RoundToInt(17 * scale)) };
-        LabelWorld(new Vector3(-5.08f, 3.91f, 3), "筆の運びを見てから、一文字ずつなぞりましょう。", subtitle, 660 * scale, 30 * scale);
-        LabelWorld(new Vector3(-5f, 3.44f, 3), "お題　" + (string.IsNullOrEmpty(promptWord) ? "自由課題" : promptWord), subtitle, 500 * scale, 28 * scale);
-        LabelWorld(new Vector3(3.36f, 3.44f, 3), "お手本一覧", subtitle, 200 * scale, 28 * scale);
-        for (int i = 0; i < previews.Count; i++)
-            LabelWorld(new Vector3(4.73f, 2.65f - i * 1.3f, 3), (i + 1) + "", subtitle, 40 * scale, 30 * scale);
-        var stateStyle = new GUIStyle(subtitle);
-        stateStyle.normal.textColor = Vermilion;
-        string state = failed ? "要確認" : transitioning ? "完成" : useLocalTestTemplate ? "テスト"
-            : drawingStarted ? "受信中" : trial?.Link?.Connected == true ? "準備待ち" : "接続待ち";
-        LabelWorld(new Vector3(3.36f, 4.24f, 3), "［ " + state + " ］", stateStyle, 220 * scale, 40 * scale);
-        float footerY = Screen.height * 0.875f;
-        float footerLeft = previewCamera.WorldToScreenPoint(new Vector3(-5.3f, 0, 3)).x;
-        float footerRight = previewCamera.WorldToScreenPoint(new Vector3(4.9f, 0, 3)).x;
-        float buttonWidth = 150 * scale, buttonHeight = 48 * scale;
-        Color previousContent = GUI.contentColor;
-        GUI.contentColor = Ink;
-        GUI.Label(new Rect(footerLeft, footerY, footerRight - footerLeft - 2 * buttonWidth - 30 * scale, 84 * scale),
-            message ?? "準備中…", style);
-        GUI.contentColor = previousContent;
-        var buttonStyle = new GUIStyle(GUI.skin.button) { font = uiFont, fontSize = Mathf.Max(14, Mathf.RoundToInt(21 * scale)) };
-        buttonStyle.normal.background = buttonStyle.hover.background = buttonStyle.active.background = Texture2D.whiteTexture;
-        buttonStyle.normal.textColor = buttonStyle.hover.textColor = buttonStyle.active.textColor = Color.white;
-        Color previousBackground = GUI.backgroundColor;
-        if (!transitioning)
-        {
-            GUI.backgroundColor = Vermilion;
-            if (!useLocalTestTemplate && !failed && trial?.Link != null && trial.Link.Connected &&
-                !trial.Link.LocalReady && GUI.Button(new Rect(footerRight - 2 * buttonWidth - 12 * scale, footerY,
-                    buttonWidth, buttonHeight), "準備完了", buttonStyle))
-            {
-                trial.Link.LocalReady = true;
-                trial.Recorder.Record("learnerReady", detail: "ready to observe; balance board calibration follows template completion");
-            }
-            GUI.backgroundColor = new Color(0.40f, 0.33f, 0.23f);
-            if (GUI.Button(new Rect(footerRight - buttonWidth, footerY, buttonWidth, buttonHeight), "やり直す", buttonStyle)) Retry();
-        }
-        GUI.backgroundColor = previousBackground;
-    }
-
-    void LabelWorld(Vector3 position, string text, GUIStyle style, float width, float height)
-    {
-        Vector3 screen = previewCamera.WorldToScreenPoint(position);
-        GUI.Label(new Rect(screen.x, Screen.height - screen.y - height * 0.5f, width, height), text, style);
-    }
-
-    void OnDestroy()
-    {
-        if (paperMaterial != null) Destroy(paperMaterial);
-        if (uiFont != null) Destroy(uiFont);
-        foreach (var material in decorationMaterials) if (material != null) Destroy(material);
-    }
 }
