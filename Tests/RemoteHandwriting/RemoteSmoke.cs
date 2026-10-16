@@ -148,6 +148,45 @@ public static class RemoteSmoke
             Check(!imported.HasFinished && imported.HasEveryCharacter(), "redo after fitting accepts fresh handwriting");
             importedObject.SetActive(false);
             importedObject.SetActive(true);
+            imported.fitWhileReceiving = true;
+            imported.lineWidthMultiplier = 2.5f;
+            imported.ShowCharacter(0);
+            Queue(0, "point", 0, 10f);
+            Queue(1, "point", 0, 30f);
+            Tick();
+            var liveLine = CurrentLiveLines()[0];
+            Check(!imported.HasFinished && InsideFrame(liveLine, paperBounds), "unfinished offset handwriting fits inside printed frame including thick caps");
+            float oldPosition = liveLine.GetPosition(0).x;
+            var newStroke = new RemoteHandwritingReceiver.Packet {
+                version = 1, session = "test", method = "PenTablet", sequence = 2,
+                eventType = "point", character = 0, stroke = 1, x = 100f, y = 200f
+            };
+            typeof(RemoteHandwritingReceiver).GetMethod("QueuePacket", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(imported, new object[] { JsonUtility.ToJson(newStroke) });
+            Tick();
+            Check(Math.Abs(oldPosition - liveLine.GetPosition(0).x) > 0.001f, "new stroke rescales previous strokes together");
+            foreach (var line in CurrentLiveLines())
+                Check(InsideFrame(line, paperBounds), "all live strokes remain inside frame after horizontal and vertical expansion");
+            Queue(3, "experimentEnd", 0, 0f);
+            Tick();
+            var raw = imported.ExportTemplate("あ", false);
+            Check(raw.strokes.Exists(s => s.points.Exists(p => p.x == 100f && p.y == 200f)), "live fitting preserves original coordinates for tracing");
+            importedObject.SetActive(false);
+            importedObject.SetActive(true);
+            imported.ShowCharacter(0);
+            Queue(0, "point", 0, 10f);
+            Tick();
+            var resetLine = CurrentLiveLines()[0];
+            Check(Math.Abs(resetLine.GetPosition(0).x - paperBounds.center.x) < 0.001f, "new reception clears previous live bounds");
+            Queue(1, "clearCharacter", 0, 0f);
+            Queue(2, "point", 0, -100f);
+            Tick();
+            var liveBounds = (System.Collections.IDictionary)typeof(RemoteHandwritingReceiver)
+                .GetField("liveBounds", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(imported);
+            Check(((Bounds)liveBounds[0]).center.x == -100f, "redo resets live fit bounds");
+            importedObject.SetActive(false);
+            importedObject.SetActive(true);
+            imported.fitWhileReceiving = false;
             var replay = imported.ReplayTestWord();
             Check(replay.MoveNext() && imported.CharacterCount == 1 && !imported.HasFinished, "test handwriting starts progressively");
             while (replay.MoveNext()) { }
@@ -159,6 +198,32 @@ public static class RemoteSmoke
         }
         catch (Exception e) { Debug.LogException(e); EditorApplication.Exit(1); }
     }
+    static List<LineRenderer> CurrentLiveLines()
+    {
+        // Destroy is deferred until the frame ends; ignore retired renderers from earlier cases.
+        var strokes = (System.Collections.IDictionary)typeof(RemoteHandwritingReceiver)
+            .GetField("strokes", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(receiver);
+        var result = new List<LineRenderer>();
+        foreach (var stroke in strokes.Values)
+        {
+            var line = (LineRenderer)stroke.GetType().GetField("active").GetValue(stroke);
+            if (line != null) result.Add(line);
+        }
+        return result;
+    }
+
+    static bool InsideFrame(LineRenderer line, Bounds paperBounds)
+    {
+        float radius = line.startWidth * 0.5f;
+        for (int i = 0; i < line.positionCount; i++)
+        {
+            Vector3 offset = line.GetPosition(i) - paperBounds.center;
+            if (Math.Abs(offset.x) + radius > paperBounds.size.x * 0.4f + 0.001f ||
+                Math.Abs(offset.y) + radius > paperBounds.size.y * 0.4f + 0.001f) return false;
+        }
+        return true;
+    }
+
     static void Check(bool value, string label)
     {
         if (!value) throw new Exception("FAILED: " + label);

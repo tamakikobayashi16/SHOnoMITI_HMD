@@ -75,6 +75,7 @@ public class RemotePreviewController : MonoBehaviour
         receiver.receiveUdp = !useLocalTestTemplate;
         receiver.acceptRemotePackets = useLocalTestTemplate;
         receiver.paper = paper;
+        receiver.fitWhileReceiving = true;
         receiver.displayScale = templateDisplayScale;
         receiver.lineWidthMultiplier = templateLineWidthMultiplier;
         receiver.guideColor = Color.black;

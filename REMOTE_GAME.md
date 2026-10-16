@@ -67,9 +67,9 @@ InputNameが空の場合は、受信した文字数を使う。文字そのも�
 
 お手本の線幅は従来の2.5倍。RemotePreviewManagerのTemplate Line Width Multiplierと、RemoteGameのManagerのRemote Template Line Width Multiplierで調整できる。太くした線幅も含めて紙に収まるよう計算する。RemoteGameでは描画用の紙の上に、黒い縁取りを付けた白い数字で残り秒数を表示する。各文字40秒で、時間切れ時に自動保存して次の文字へ進む。
 
-書いている途中は固定倍率（初期値1.65倍）で表示する。Spaceの`nextCharacter`で直前の文字、Enterの`experimentEnd`で残りの文字を、全画の外接範囲から等比拡大・縮小して紙の中央に配置する。線幅を含めて紙の90%以内に収めるため、大きく書いた文字も収まる。ペンを離すだけの`strokeEnd`では調整しない。Rで消した文字は再び固定倍率で書き始める。テスト筆跡も文字ごとに同じ処理を行う。
+RemotePreviewでは受信のたびに、その文字の全画の外接範囲を更新する。各フレームでまとめて等比縮小・中央配置し、すでに描いた線も同じ倍率で描き直す。線幅と丸い線端を含めて紙の80%以内に収め、印刷された枠の内側に余白を確保する。書き始めの点や短い線が極端に拡大されないよう、設定倍率を上限にする。Rで消した文字の範囲はリセットする。テスト筆跡と右側の一覧も同じ処理を使う。RemoteGameは完成した文字の全画を使って配置する。
 
-RemotePreviewManagerの`Template Display Scale`、RemoteGameのManagerの`Remote Template Display Scale`で調整できる。完成後は1.65で紙の90%に収まり、それ以下では小さくなり、それ以上でもはみ出さないよう上限を設ける。両シーンを同じ値にすると同じ比率で表示する。元座標を引き継ぎ、RemoteGameでも同じ方法で文字ごとに調整する。5文字の右側一覧にも適用する。
+RemotePreviewManagerの`Template Display Scale`、RemoteGameのManagerの`Remote Template Display Scale`で調整できる。完成後は1.65で紙の90%に収まり、それ以下では小さくなり、それ以上でもはみ出さないよう上限を設ける。RemotePreviewはこの値を上限にして受信中の筆跡を枠内に収めるため、RemoteGameの完成後の表示倍率と必ずしも一致しない。元座標を引き継ぎ、RemoteGameでも同じ方法で文字ごとに調整する。5文字の右側一覧にも適用する。
 
 shodoVRのJSON形式を受信する（既存HMDReceiverの50001番CSVとは別）。
 

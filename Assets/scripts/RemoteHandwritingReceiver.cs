@@ -13,6 +13,8 @@ public class RemoteHandwritingReceiver : MonoBehaviour
     public const int MaxCharacters = 5;
     [Range(0.5f, 2f)] public float displayScale = 1f;
     [Range(0.5f, 5f)] public float lineWidthMultiplier = 1f;
+    [Tooltip("受信中も文字全体を紙の枠内に収めます。RemotePreview用。")]
+    public bool fitWhileReceiving;
     float previousLineWidthMultiplier = float.NaN;
     float previousDisplayScale = float.NaN;
     public int listenPort = 5005;
@@ -50,6 +52,8 @@ public class RemoteHandwritingReceiver : MonoBehaviour
     readonly SortedDictionary<int, Packet> pending = new SortedDictionary<int, Packet>();
     readonly Dictionary<string, Stroke> strokes = new Dictionary<string, Stroke>();
     readonly Dictionary<int, Bounds> completedBounds = new Dictionary<int, Bounds>();
+    readonly Dictionary<int, Bounds> liveBounds = new Dictionary<int, Bounds>();
+    readonly HashSet<int> dirtyCharacters = new HashSet<int>();
     List<GameObject> previewTargets = new List<GameObject>();
     UdpClient socket;
     Thread worker;
@@ -132,6 +136,9 @@ public class RemoteHandwritingReceiver : MonoBehaviour
             gapSince = -1f;
             ApplyPacket(packet);
         }
+        // Batch all points received this frame into one redraw per character.
+        foreach (int character in dirtyCharacters) RedrawCharacter(character);
+        dirtyCharacters.Clear();
     }
 
     int FirstSequence()
@@ -177,6 +184,8 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         if (packet.eventType == "clearCharacter")
         {
             completedBounds.Remove(packet.character);
+            liveBounds.Remove(packet.character);
+            dirtyCharacters.Remove(packet.character);
             foreach (var key in new List<string>(strokes.Keys))
             {
                 Stroke stroke = strokes[key];
@@ -209,11 +218,19 @@ public class RemoteHandwritingReceiver : MonoBehaviour
             Error = "お手本の点数が上限を超えました。書き直してください。";
             return;
         }
-        current.points.Add(new Vector3(packet.x, packet.y, 0f));
-        DrawStroke(current);
+        var point = new Vector3(packet.x, packet.y, 0f);
+        current.points.Add(point);
+        if (fitWhileReceiving)
+        {
+            if (!liveBounds.TryGetValue(packet.character, out var bounds)) bounds = new Bounds(point, Vector3.zero);
+            else bounds.Encapsulate(point);
+            liveBounds[packet.character] = bounds;
+            dirtyCharacters.Add(packet.character);
+        }
+        else DrawStroke(current);
     }
 
-    // Only fit at a character boundary, so incoming points never move existing ink.
+    // Tracing keeps the completed layout; preview can also fit unfinished ink.
     void CompleteCharacter(int character)
     {
         if (character < 0 || completedBounds.ContainsKey(character)) return;
@@ -228,6 +245,11 @@ public class RemoteHandwritingReceiver : MonoBehaviour
                 }
         if (!found) return;
         completedBounds.Add(character, bounds);
+        RedrawCharacter(character);
+    }
+
+    void RedrawCharacter(int character)
+    {
         foreach (var stroke in strokes.Values)
         {
             if (stroke.character != character) continue;
@@ -382,12 +404,23 @@ public class RemoteHandwritingReceiver : MonoBehaviour
                 bounds.size.y / (inkBounds.size.y + width));
             scale = fit * 0.9f * Mathf.Clamp(displayScale / 1.65f, 0.1f, 1f);
         }
+        if (fitWhileReceiving && liveBounds.TryGetValue(stroke.character, out var liveInk))
+        {
+            sourceCenter = liveInk.center;
+            // The printed frame is inset from the paper edge. Include round caps,
+            // and avoid magnifying the first dot or short stroke to fill the sheet.
+            float fit = Mathf.Min(bounds.size.x / (liveInk.size.x + width),
+                bounds.size.y / (liveInk.size.y + width)) * 0.8f;
+            float nominal = Mathf.Min(bounds.size.x / (2f * Mathf.Max(0.001f, sourceHalfSize.x)),
+                bounds.size.y / (2f * Mathf.Max(0.001f, sourceHalfSize.y))) * 0.9f * Mathf.Clamp(displayScale, 0.5f, 2f);
+            scale = Mathf.Min(nominal, fit);
+        }
         var center = bounds.center;
         // The scene camera looks along +Z. Keep guides behind the learner's ink.
         center.z = bounds.min.z - 0.015f;
         line.startWidth = line.endWidth = Mathf.Max(0.001f, width * scale);
         int first = line.positionCount;
-        // Existing points do not move while the remote person writes.
+        // RedrawCharacter resets the count when the shared character layout changes.
         line.positionCount = points.Count;
         for (int i = first; i < points.Count; i++) line.SetPosition(i, center + (points[i] - sourceCenter) * scale);
     }
@@ -411,6 +444,8 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         foreach (var stroke in strokes.Values) DestroyLines(stroke);
         strokes.Clear();
         completedBounds.Clear();
+        liveBounds.Clear();
+        dirtyCharacters.Clear();
         if (material != null) Destroy(material);
         session = null;
         nextSequence = CharacterCount = 0;
