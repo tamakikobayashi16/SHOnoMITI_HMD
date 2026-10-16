@@ -51,3 +51,4 @@ MonoBehaviour:
   nextSceneName: RemoteGame
   completedDisplaySeconds: 1
   templateDisplayScale: 1.65
+  templateLineWidthMultiplier: 2.5

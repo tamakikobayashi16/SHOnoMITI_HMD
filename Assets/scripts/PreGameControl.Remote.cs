@@ -13,16 +13,54 @@ public partial class PreGameControl
     public Vector2 remoteSourceHalfSize = new Vector2(1.92f, 1.08f);
     [Tooltip("なぞるお手本の表示倍率。1が従来の大きさです。")]
     [Range(0.5f, 2f)] public float remoteTemplateDisplayScale = 1.65f;
+    [Range(0.5f, 5f)] public float remoteTemplateLineWidthMultiplier = 2.5f;
     RemoteHandwritingReceiver remoteTemplate;
     RemoteTrialRuntime remoteTrial;
     int remoteTraceStroke = -1;
     bool remoteTraceStarted;
     bool remoteRecordFailed;
 
+    void LateUpdate()
+    {
+        if (!useRemoteTemplate || timerText == null || moveArea == null) return;
+        var paperRenderer = moveArea.GetComponent<Renderer>();
+        var camera = Camera.main;
+        var parent = timerText.rectTransform.parent as RectTransform;
+        if (paperRenderer == null || camera == null || parent == null) return;
+        var canvas = timerText.canvas;
+        Vector3 screen = camera.WorldToScreenPoint(new Vector3(paperRenderer.bounds.center.x,
+            paperRenderer.bounds.max.y, paperRenderer.bounds.center.z));
+        if (screen.z <= 0f) return;
+        float scale = canvas != null ? canvas.scaleFactor : 1f;
+        var rt = timerText.rectTransform;
+        float halfHeight = rt.rect.height * scale * 0.5f;
+        screen.y = Mathf.Clamp(screen.y + halfHeight + 8f, halfHeight, Screen.height - halfHeight);
+        var uiCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, screen, uiCamera, out var local))
+            rt.localPosition = new Vector3(local.x, local.y, 0f);
+    }
+
+    void ConfigureRemoteTimer()
+    {
+        if (timerText == null) return;
+        timerText.gameObject.SetActive(true);
+        timerText.enabled = true;
+        timerText.rectTransform.anchorMin = timerText.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        timerText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        timerText.rectTransform.sizeDelta = new Vector2(200f, 100f);
+        timerText.fontSize = 80f;
+        timerText.enableWordWrapping = false;
+        timerText.color = Color.white;
+        timerText.outlineColor = Color.black;
+        timerText.outlineWidth = 0.2f;
+        timerText.raycastTarget = false;
+        timerText.rectTransform.SetAsLastSibling();
+    }
+
     [System.Serializable]
     class TraceLayout
     {
-        public float displayScale;
+        public float displayScale, lineWidthMultiplier;
         public Vector3 paperCenter, paperSize;
     }
 
@@ -48,7 +86,8 @@ public partial class PreGameControl
             remoteTrial.Phase("tracing");
             var renderer = moveArea != null ? moveArea.GetComponent<Renderer>() : null;
             if (renderer != null) remoteTrial.Recorder.Record("traceLayout", detail: JsonUtility.ToJson(new TraceLayout {
-                displayScale = remoteTemplateDisplayScale, paperCenter = renderer.bounds.center, paperSize = renderer.bounds.size }));
+                displayScale = remoteTemplateDisplayScale, lineWidthMultiplier = remoteTemplateLineWidthMultiplier,
+                paperCenter = renderer.bounds.center, paperSize = renderer.bounds.size }));
         }
         return true;
     }
@@ -83,6 +122,7 @@ public partial class PreGameControl
         remoteTemplate.sourceHalfSize = remoteSourceHalfSize;
         remoteTemplate.paper = moveArea;
         remoteTemplate.displayScale = remoteTemplateDisplayScale;
+        remoteTemplate.lineWidthMultiplier = remoteTemplateLineWidthMultiplier;
         remoteTemplate.CharacterAdded += RefreshRemoteSlots;
         remoteTemplate.SetPreviewTargets(rightSlots);
         receiverObject.SetActive(true);

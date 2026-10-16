@@ -77,6 +77,13 @@ public static class RemoteSmoke
                 "live scale adjustment updates existing handwriting");
             receiver.displayScale = 1f;
             Tick();
+            float originalWidth = active.startWidth;
+            receiver.lineWidthMultiplier = 2.5f;
+            Tick();
+            Check(Math.Abs(active.startWidth - originalWidth * 2.5f) < 0.001f,
+                "template width multiplier thickens existing lines");
+            receiver.lineWidthMultiplier = 1f;
+            Tick();
             Queue(6, "experimentEnd", 1, 0f);
             Tick();
             Check(!receiver.HasFinished, "completion waits for earlier stroke packet");

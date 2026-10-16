@@ -12,6 +12,8 @@ public class RemoteHandwritingReceiver : MonoBehaviour
 {
     public const int MaxCharacters = 5;
     [Range(0.5f, 2f)] public float displayScale = 1f;
+    [Range(0.5f, 5f)] public float lineWidthMultiplier = 1f;
+    float previousLineWidthMultiplier = float.NaN;
     float previousDisplayScale = float.NaN;
     public int listenPort = 5005;
     public bool receiveUdp = true;
@@ -99,9 +101,10 @@ public class RemoteHandwritingReceiver : MonoBehaviour
 
     void Update()
     {
-        if (previousDisplayScale != displayScale)
+        if (previousDisplayScale != displayScale || previousLineWidthMultiplier != lineWidthMultiplier)
         {
             previousDisplayScale = displayScale;
+            previousLineWidthMultiplier = lineWidthMultiplier;
             foreach (var stroke in strokes.Values)
             {
                 if (stroke.preview != null) stroke.preview.positionCount = 0;
@@ -370,11 +373,11 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         float scale = Mathf.Min(bounds.size.x / (2f * Mathf.Max(0.001f, sourceHalfSize.x)),
             bounds.size.y / (2f * Mathf.Max(0.001f, sourceHalfSize.y))) * 0.9f * Mathf.Clamp(displayScale, 0.5f, 2f);
         Vector3 sourceCenter = Vector3.zero;
+        float width = Mathf.Max(0.001f, sourceLineWidth) * Mathf.Clamp(lineWidthMultiplier, 0.5f, 5f);
         if (completedBounds.TryGetValue(stroke.character, out var inkBounds))
         {
             sourceCenter = inkBounds.center;
             // Include the round stroke caps and leave a 5% margin on every edge.
-            float width = Mathf.Max(0.001f, sourceLineWidth);
             float fit = Mathf.Min(bounds.size.x / (inkBounds.size.x + width),
                 bounds.size.y / (inkBounds.size.y + width));
             scale = fit * 0.9f * Mathf.Clamp(displayScale / 1.65f, 0.1f, 1f);
@@ -382,7 +385,7 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         var center = bounds.center;
         // The scene camera looks along +Z. Keep guides behind the learner's ink.
         center.z = bounds.min.z - 0.015f;
-        line.startWidth = line.endWidth = Mathf.Max(0.001f, sourceLineWidth * scale);
+        line.startWidth = line.endWidth = Mathf.Max(0.001f, width * scale);
         int first = line.positionCount;
         // Existing points do not move while the remote person writes.
         line.positionCount = points.Count;

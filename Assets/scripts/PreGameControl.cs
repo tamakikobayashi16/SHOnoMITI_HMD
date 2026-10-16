@@ -362,6 +362,7 @@ public partial class PreGameControl : MonoBehaviour
         // タイマー初期化＆配置
         UpdateTimerUI();
         if (timerText != null && autoPlaceTimerAtTopCenter) PlaceTimerToTopCenter();
+        if (useRemoteTemplate) ConfigureRemoteTimer();
 
         // カウントダウン UI 初期化
         if (countdownText != null)
@@ -383,7 +384,10 @@ public partial class PreGameControl : MonoBehaviour
     {
         if (!UpdateRemoteTrial()) return;
         if (useRemoteTemplate && remoteTemplate != null)
+        {
             remoteTemplate.displayScale = remoteTemplateDisplayScale;
+            remoteTemplate.lineWidthMultiplier = remoteTemplateLineWidthMultiplier;
+        }
         bool gotDataThisFrame = false;
 
         switch (status)

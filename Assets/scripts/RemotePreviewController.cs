@@ -16,6 +16,7 @@ public class RemotePreviewController : MonoBehaviour
     public float completedDisplaySeconds = 1f;
     [Tooltip("お手本の表示倍率。1が従来の大きさです。")]
     [Range(0.5f, 2f)] public float templateDisplayScale = 1.65f;
+    [Range(0.5f, 5f)] public float templateLineWidthMultiplier = 2.5f;
     RemoteHandwritingReceiver receiver;
     readonly List<GameObject> previews = new List<GameObject>();
     string promptWord, message;
@@ -52,6 +53,7 @@ public class RemotePreviewController : MonoBehaviour
         receiver.acceptRemotePackets = useLocalTestTemplate;
         receiver.paper = paper;
         receiver.displayScale = templateDisplayScale;
+        receiver.lineWidthMultiplier = templateLineWidthMultiplier;
         receiver.guideColor = Color.black;
         receiver.CharacterAdded += CharacterAdded;
         receiveObject.SetActive(true);
@@ -104,6 +106,7 @@ public class RemotePreviewController : MonoBehaviour
     {
         if (receiver == null || transitioning) return;
         receiver.displayScale = templateDisplayScale;
+        receiver.lineWidthMultiplier = templateLineWidthMultiplier;
         if (failed || trial == null) return;
         if (!string.IsNullOrEmpty(trial.Error)) { Fail(trial.Error); return; }
         if (!string.IsNullOrEmpty(receiver.Error)) { Fail(receiver.Error); return; }

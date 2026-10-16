@@ -63,6 +63,8 @@ InputNameが空の場合は、受信した文字数を使う。文字そのも�
 
 ## 表示倍率
 
+お手本の線幅は従来の2.5倍。RemotePreviewManagerのTemplate Line Width Multiplierと、RemoteGameのManagerのRemote Template Line Width Multiplierで調整できる。太くした線幅も含めて紙に収まるよう計算する。RemoteGameでは描画用の紙の上に、黒い縁取りを付けた白い数字で残り秒数を表示する。各文字40秒で、時間切れ時に自動保存して次の文字へ進む。
+
 書いている途中は固定倍率（初期値1.65倍）で表示する。Spaceの`nextCharacter`で直前の文字、Enterの`experimentEnd`で残りの文字を、全画の外接範囲から等比拡大・縮小して紙の中央に配置する。線幅を含めて紙の90%以内に収めるため、大きく書いた文字も収まる。ペンを離すだけの`strokeEnd`では調整しない。Rで消した文字は再び固定倍率で書き始める。テスト筆跡も文字ごとに同じ処理を行う。
 
 RemotePreviewManagerの`Template Display Scale`、RemoteGameのManagerの`Remote Template Display Scale`で調整できる。完成後は1.65で紙の90%に収まり、それ以下では小さくなり、それ以上でもはみ出さないよう上限を設ける。両シーンを同じ値にすると同じ比率で表示する。元座標を引き継ぎ、RemoteGameでも同じ方法で文字ごとに調整する。5文字の右側一覧にも適用する。
@@ -83,7 +85,7 @@ shodoVRのJSON形式を受信する（既存HMDReceiverの50001番CSVとは別�
 
 追加した接続・記録テストはSessionSmoke（18項目）。実際のDrawingUdpSenderとRemotePreviewをループバックで接続するSessionFlowSmokeでは、準備確認、筆跡停止タイムアウト、シーン再読み込みによるやり直し、両PC相当の共通ID記録、完成合図を1回落とした際の再送、次シーンへの引き継ぎを確認した。SessionFlowSmokeはshodoVRのDrawingUdpSender.csも隔離プロジェクトにコピーして実行する。shodoVR側の対応Unityは2022.3.62f2。
 
-既存のUnity参照を使いプロジェクト内のC#をコンパイル済み。受信スクリプトを隔離したUnity 2021.3.4f1で、実UDP受信、文字の保持、書き直し、重複除外、順序の回復、座標変換、完成後の固定、ソケット再起動、欠落検出、データ引き継ぎ、テスト筆跡の逐次再生、文字完成時の中央配置・範囲調整の31項目を確認した。RemotePreviewのシーン読み込みからテスト筆跡の完成・RemoteGameへの自動遷移・5文字すべての筆跡の保持までを、隔離プロジェクトの簡易RemoteGameシーンで確認した。
+既存のUnity参照を使いプロジェクト内のC#をコンパイル済み。受信スクリプトを隔離したUnity 2021.3.4f1で、実UDP受信、文字の保持、書き直し、重複除外、順序の回復、座標変換、完成後の固定、ソケット再起動、欠落検出、データ引き継ぎ、テスト筆跡の逐次再生、文字完成時の中央配置・範囲調整・線幅変更の32項目を確認した。RemotePreviewのシーン読み込みからテスト筆跡の完成・RemoteGameへの自動遷移・5文字すべての筆跡の保持までを、隔離プロジェクトの簡易RemoteGameシーンで確認した。
 
 テストコードは`Tests/RemoteHandwriting`、結果は`verification.txt`。再実行は必ず別のUnityプロジェクトで行う。受信スクリプト、RemoteTemplateData、RemoteTestHandwritingとテストをコピーし、テストをAssets/Editorに配置して`-executeMethod RemoteSmoke.Run`で起動する。標準のjsonserializeとphysicsモジュールが必要。シーン遷移テストのPreviewFlowSmokeは検証用RemoteGameを作成するため、TempRemoteVerificationという隔離プロジェクトでのみ実行できる。
 

@@ -29,7 +29,8 @@ PASS: completed handwriting is centered
 PASS: redo after fitting accepts fresh handwriting
 PASS: test handwriting starts progressively
 PASS: five-character sample completes with all twelve strokes preserved
-REMOTE_SMOKE_PASS: 31 checks
+PASS: template width multiplier thickens existing lines
+REMOTE_SMOKE_PASS: 32 checks
 PASS: bidirectional UDP heartbeat connects both PCs
 PASS: trial ID and prompt shared
 PASS: drawing blocked until both ready
