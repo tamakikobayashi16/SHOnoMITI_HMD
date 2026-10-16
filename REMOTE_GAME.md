@@ -1,5 +1,7 @@
 # RemoteGame：遠隔のお手本をなぞる
 
+起動から描画までの操作は[REMOTE_OPERATIONS.md](REMOTE_OPERATIONS.md)にまとめている。RemotePreviewは、障子風の格子・生成りの背景・木枠の紙・明朝体・朱色の状態表示と準備ボタンを用いた和風デザイン。右側は5文字分の固定一覧で、書いている文字に朱色の目印を付ける。
+
 ## 新しいシーンの流れ
 
 `InputName → RemotePreview → RemoteGame`。RemotePreviewで筆跡をリアルタイム表示し、`experimentEnd`受信後に約1秒間完成を表示して自動遷移する。筆跡の座標をGlobalData.RemoteTemplateにコピーし、RemoteGameで読み込む。前段シーンが破棄されても筆跡は残り、RemoteGameは再受信しない。

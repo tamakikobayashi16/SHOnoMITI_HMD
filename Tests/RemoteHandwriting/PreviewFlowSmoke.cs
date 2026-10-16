@@ -14,6 +14,7 @@ public static class PreviewFlowSmoke
         var game = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         EditorSceneManager.SaveScene(game, "Assets/Scenes/RemoteGame.unity");
         EditorSceneManager.OpenScene("Assets/Scenes/RemotePreview.unity");
+        UnityEngine.Object.FindObjectOfType<RemotePreviewController>().useLocalTestTemplate = true;
         EditorBuildSettings.scenes = new[] {
             new EditorBuildSettingsScene("Assets/Scenes/RemotePreview.unity", true),
             new EditorBuildSettingsScene("Assets/Scenes/RemoteGame.unity", true)
