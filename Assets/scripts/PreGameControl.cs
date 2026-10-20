@@ -1243,6 +1243,7 @@ public partial class PreGameControl : MonoBehaviour
 
         Vector3 nudge = Vector3.forward * galleryStrokeZOffset;
         if (Camera.main != null) nudge = -Camera.main.transform.forward.normalized * galleryStrokeZOffset;
+        if (useRemoteTemplate) nudge = Vector3.zero;
 
         for (int li = 0; li < glyph.lrWorldPts.Count; li++)
         {
@@ -1324,6 +1325,7 @@ public partial class PreGameControl : MonoBehaviour
             newLR.Simplify(0f);
         }
 
+        if (useRemoteTemplate) SavedInkOnPaper.Align(savedGroup);
         savedGroups.Add(savedGroup);
         savedCount++;
     }
@@ -1944,7 +1946,7 @@ public partial class PreGameControl : MonoBehaviour
         savedGroup.isStatic = false;
         if (galleryParent != null) savedGroup.transform.SetParent(galleryParent, true);
 
-        Vector3 nudge = Camera.main ? -Camera.main.transform.forward.normalized * galleryStrokeZOffset
+        Vector3 nudge = useRemoteTemplate ? Vector3.zero : Camera.main ? -Camera.main.transform.forward.normalized * galleryStrokeZOffset
                                     : Vector3.forward * galleryStrokeZOffset;
 
         savedGroup.transform.SetPositionAndRotation(anchorOriginal + nudge, anchorRotation);
@@ -1971,6 +1973,7 @@ public partial class PreGameControl : MonoBehaviour
 
         savedGroup.transform.position = targetWorldPos + nudge;
 
+        if (useRemoteTemplate) SavedInkOnPaper.Align(savedGroup);
         savedGroups.Add(savedGroup);
         savedCount++;
         SelectGalleryIndex(savedCount - 1);
@@ -2040,7 +2043,7 @@ public partial class PreGameControl : MonoBehaviour
         savedGroup.isStatic = false;
         if (galleryParent != null) savedGroup.transform.SetParent(galleryParent, true);
 
-        Vector3 nudge = Camera.main ? -Camera.main.transform.forward.normalized * galleryStrokeZOffset
+        Vector3 nudge = useRemoteTemplate ? Vector3.zero : Camera.main ? -Camera.main.transform.forward.normalized * galleryStrokeZOffset
                                     : Vector3.forward * galleryStrokeZOffset;
 
         savedGroup.transform.SetPositionAndRotation(anchorOriginal + nudge, anchorRotation);
@@ -2061,6 +2064,7 @@ public partial class PreGameControl : MonoBehaviour
         // 行の位置に移動
         savedGroup.transform.position = targetWorldPos + nudge;
 
+        if (useRemoteTemplate) SavedInkOnPaper.Align(savedGroup);
         savedGroups.Add(savedGroup);
         savedCount++;
         SelectGalleryIndex(savedCount - 1);
@@ -2164,7 +2168,7 @@ public partial class PreGameControl : MonoBehaviour
 
         _readyForResult = true;
         if (useRemoteTemplate)
-            ShowMessage("賞を選んでください：1＝金賞　2＝銀賞　3＝銅賞（テンキーも可）");
+            ShowMessage("");
         yield break;
     }
 
