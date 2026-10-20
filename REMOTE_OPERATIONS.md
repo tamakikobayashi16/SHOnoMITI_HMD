@@ -7,6 +7,7 @@
 1. 体験者PCで`ipconfig`を実行し、使用中の接続のIPv4を確認する。
 2. shodoVRのSampleScene → Pentab → Drawing Udp Senderで、Receiver IPに体験者PCのIPv4を入力する。Receiver Portは5005、Control Portは5006、Require Session HandshakeはON。設定してシーンを保存する。
 3. 体験者側のRemotePreviewManagerとRemoteGameのManagerのUse Local Test TemplateをOFFにする（現在の保存済み設定）。
+   RemoteGameのManagerの`Skip Balance Board In Local Test`もOFF（本番用の保存設定）。
 4. ペンタブと、従来のバランスボード・Wiiリモコンの接続環境を準備する。
 
 ## お手本を見る
