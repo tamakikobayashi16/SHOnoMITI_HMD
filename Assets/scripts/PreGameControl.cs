@@ -356,6 +356,9 @@ public partial class PreGameControl : MonoBehaviour
         FreezeAnimatorAtStart(galleryAnimator);
         FreezeAnimatorAtStart(rightPanelAnimator);
         FreezeAnimatorAtStart(moveAreaAnimator);
+        // Three-character remote galleries use larger thumbnails within the same screen area.
+        if (useRemoteTemplate && galleryArea != null)
+            galleryArea.transform.position += Vector3.down * 0.75f;
 
         if (useRemoteTemplate) InitializeRemoteTemplate();
 

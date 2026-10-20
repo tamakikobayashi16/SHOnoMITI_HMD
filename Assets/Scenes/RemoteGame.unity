@@ -615,13 +615,13 @@ MonoBehaviour:
   rightPanelParent: {fileID: 841066083}
   backgroundPrefab: {fileID: 6679367314865922125, guid: 9349684e5080dcf48a6f4daefbf79a7c, type: 3}
   brushFont: {fileID: 11400000, guid: 5a0f7fcb48885554d9dd57dc312b09f7, type: 2}
-  rightSlotSpacing: 1.5
+  rightSlotSpacing: 2.4
   galleryArea: {fileID: 1844862191}
   galleryParent: {fileID: 168315003}
   galleryStartLocalPos: {x: -6, y: 1, z: 0}
-  gallerySpacingY: 1.5
-  galleryThumbnailScale: 0.18
-  maxCharsPerGroup: 5
+  gallerySpacingY: 2.4
+  galleryThumbnailScale: 0.28
+  maxCharsPerGroup: 3
   deadZone: 0.02
   moveSpeed: 0.8
   emaAlpha: 0.2
@@ -634,7 +634,7 @@ MonoBehaviour:
   sampleTextPrefab: {fileID: 6134634969424258992, guid: 341e96b50156f2643a96a0fe16db86bf, type: 3}
   galleryStrokeZOffset: 3
   gallerySortingOrderBoost: 3000
-  gallerySavedScale: 0.18
+  gallerySavedScale: 0.28
   drawSubSteps: 5
   saveGlyphAsObject: 1
   scaleLineWidthInGallery: 1

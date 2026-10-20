@@ -72,6 +72,13 @@ public class InputNameScene : MonoBehaviour
     {
         string s = (nameInput != null) ? nameInput.text : null;
         s = string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+        if ((sceneName == "RemotePreview" || sceneName == "RemoteGame") &&
+            !IsDefaultRequest(s) && s.Length > RemoteHandwritingReceiver.MaxCharacters)
+        {
+            if (messageText != null) messageText.text = "\u304a\u984c\u306f\u6700\u59273\u6587\u5b57\u3067\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002";
+            return;
+        }
+
 
         // 入力が「果物/くだもの/クダモノ/kudamono」または空ならデフォルトお題を出題
         if (IsDefaultRequest(s))

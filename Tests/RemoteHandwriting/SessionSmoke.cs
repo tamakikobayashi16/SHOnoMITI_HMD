@@ -25,11 +25,11 @@ public static class SessionSmoke
             using (var host = new RemoteTrialLink(true, 0))
             using (var teacher = new RemoteTrialLink(false, host.LocalPort, "127.0.0.1"))
             {
-                host.BeginTrial(first, "あいうえお", "anonymous-test");
+                host.BeginTrial(first, "あいう", "anonymous-test");
                 teacher.DeviceReady = true;
                 Exchange(host, teacher);
                 Check(host.Connected && teacher.Connected, "bidirectional UDP heartbeat connects both PCs");
-                Check(teacher.State.trialId == first && teacher.State.prompt == "あいうえお", "trial ID and prompt shared");
+                Check(teacher.State.trialId == first && teacher.State.prompt == "あいう", "trial ID and prompt shared");
                 Check(!host.CanDraw && !teacher.CanDraw, "drawing blocked until both ready");
                 teacher.LocalReady = true;
                 Exchange(host, teacher);

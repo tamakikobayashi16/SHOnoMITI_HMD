@@ -1,12 +1,12 @@
 # RemoteGame：遠隔のお手本をなぞる
 
-起動から描画までの操作は[REMOTE_OPERATIONS.md](REMOTE_OPERATIONS.md)にまとめている。RemotePreviewはRemoteGameシーンをコピーし、同じ背景モデル・カメラ・中央の紙・右側の紙Prefab・日本語フォントを使用する。独自の障子風パネルは廃止し、上部に現在の文字、下部に接続状態と準備・再試行ボタンを表示する。ボード操作・描画用カーソル・結果表示はプレビューでは無効。右側の5文字一覧と完成後の自動遷移は維持している。
+起動から描画までの操作は[REMOTE_OPERATIONS.md](REMOTE_OPERATIONS.md)にまとめている。RemotePreviewはRemoteGameシーンをコピーし、同じ背景モデル・カメラ・中央の紙・右側の紙Prefab・日本語フォントを使用する。独自の障子風パネルは廃止し、上部に現在の文字、下部に接続状態と準備・再試行ボタンを表示する。ボード操作・描画用カーソル・結果表示はプレビューでは無効。右側の3文字一覧と完成後の自動遷移は維持している。
 
 ## 新しいシーンの流れ
 
 `InputName → RemotePreview → RemoteGame`。RemotePreviewで筆跡をリアルタイム表示し、`experimentEnd`受信後に約1秒間完成を表示して自動遷移する。筆跡の座標をGlobalData.RemoteTemplateにコピーし、RemoteGameで読み込む。前段シーンが破棄されても筆跡は残り、RemoteGameは再受信しない。
 
-現在はRemotePreviewとRemoteGameの`Use Local Test Template`を無効にした本番設定。shodoVRからの接続と筆跡を待ち、実受信時は通常どおりバランスボードの準備を行う。テスト文字「あいうえお」に戻す場合は両シーンのこのチェックを有効にする。前段から渡されるテスト／実受信の情報をRemoteGameが使うため、テスト時だけボードの準備を省略できる。
+現在はRemotePreviewとRemoteGameの`Use Local Test Template`を無効にした本番設定。shodoVRからの接続と筆跡を待ち、実受信時は通常どおりバランスボードの準備を行う。テスト文字「あいう」に戻す場合は両シーンのこのチェックを有効にする。前段から渡されるテスト／実受信の情報をRemoteGameが使うため、テスト時だけボードの準備を省略できる。
 
 shodoVR側も接続確認に対応した`codex/remote-trial-session`ブランチへ更新する。別PCへの取り込み・実機確認は別途必要。追加のスクリプトアタッチは不要で、既存のPenPosiとDrawingUdpSenderを使う。
 
@@ -61,7 +61,7 @@ InputNameが空の場合は、受信した文字数を使う。文字そのも�
 
 ## 通信
 
-お手本は最大5文字。6文字目の筆跡を受け取った場合はエラーを表示して遷移を止める。5文字目を書いた後のSpaceによる文字送りだけではエラーにしない。
+お手本は最大3文字。4文字目の筆跡を受け取った場合はエラーを表示して遷移を止める。3文字目を書いた後のSpaceによる文字送りだけではエラーにしない。
 
 ## 表示倍率
 
@@ -69,7 +69,7 @@ InputNameが空の場合は、受信した文字数を使う。文字そのも�
 
 RemotePreviewでは受信のたびに、その文字の全画の外接範囲を更新する。各フレームでまとめて等比縮小・中央配置し、すでに描いた線も同じ倍率で描き直す。線幅と丸い線端を含めて紙の80%以内に収め、印刷された枠の内側に余白を確保する。書き始めの点や短い線が極端に拡大されないよう、設定倍率を上限にする。Rで消した文字の範囲はリセットする。テスト筆跡と右側の一覧も同じ処理を使う。RemoteGameは完成した文字の全画を使って配置する。
 
-RemotePreviewManagerの`Template Display Scale`、RemoteGameのManagerの`Remote Template Display Scale`で調整できる。完成後は1.65で紙の90%に収まり、それ以下では小さくなり、それ以上でもはみ出さないよう上限を設ける。RemotePreviewはこの値を上限にして受信中の筆跡を枠内に収めるため、RemoteGameの完成後の表示倍率と必ずしも一致しない。元座標を引き継ぎ、RemoteGameでも同じ方法で文字ごとに調整する。5文字の右側一覧にも適用する。
+RemotePreviewManagerの`Template Display Scale`、RemoteGameのManagerの`Remote Template Display Scale`で調整できる。完成後は1.65で紙の90%に収まり、それ以下では小さくなり、それ以上でもはみ出さないよう上限を設ける。RemotePreviewはこの値を上限にして受信中の筆跡を枠内に収めるため、RemoteGameの完成後の表示倍率と必ずしも一致しない。元座標を引き継ぎ、RemoteGameでも同じ方法で文字ごとに調整する。3文字の右側一覧にも適用する。
 
 shodoVRのJSON形式を受信する（既存HMDReceiverの50001番CSVとは別）。
 
@@ -87,8 +87,10 @@ shodoVRのJSON形式を受信する（既存HMDReceiverの50001番CSVとは別�
 
 追加した接続・記録テストはSessionSmoke（18項目）。実際のDrawingUdpSenderとRemotePreviewをループバックで接続するSessionFlowSmokeでは、準備確認、筆跡停止タイムアウト、シーン再読み込みによるやり直し、両PC相当の共通ID記録、完成合図を1回落とした際の再送、次シーンへの引き継ぎを確認した。SessionFlowSmokeはshodoVRのDrawingUdpSender.csも隔離プロジェクトにコピーして実行する。shodoVR側の対応Unityは2022.3.62f2。
 
-既存のUnity参照を使いプロジェクト内のC#をコンパイル済み。受信スクリプトを隔離したUnity 2021.3.4f1で、実UDP受信、文字の保持、書き直し、重複除外、順序の回復、座標変換、完成後の固定、ソケット再起動、欠落検出、データ引き継ぎ、テスト筆跡の逐次再生、文字完成時の中央配置・範囲調整・線幅変更の32項目を確認した。RemotePreviewのシーン読み込みからテスト筆跡の完成・RemoteGameへの自動遷移・5文字すべての筆跡の保持までを、隔離プロジェクトの簡易RemoteGameシーンで確認した。
+既存のUnity参照を使いプロジェクト内のC#をコンパイル済み。受信スクリプトを隔離したUnity 2021.3.4f1で、実UDP受信、文字の保持、書き直し、重複除外、順序の回復、座標変換、完成後の固定、ソケット再起動、欠落検出、データ引き継ぎ、テスト筆跡の逐次再生、文字完成時の中央配置・範囲調整・線幅変更の32項目を確認した。RemotePreviewのシーン読み込みからテスト筆跡の完成・RemoteGameへの自動遷移・3文字すべての筆跡の保持までを、隔離プロジェクトの簡易RemoteGameシーンで確認した。
 
 テストコードは`Tests/RemoteHandwriting`、結果は`verification.txt`。再実行は必ず別のUnityプロジェクトで行う。受信スクリプト、RemoteTemplateData、RemoteTestHandwritingとテストをコピーし、テストをAssets/Editorに配置して`-executeMethod RemoteSmoke.Run`で起動する。標準のjsonserializeとphysicsモジュールが必要。シーン遷移テストのPreviewFlowSmokeは検証用RemoteGameを作成するため、TempRemoteVerificationという隔離プロジェクトでのみ実行できる。
 
 実際の2台のPC、ペンタブ、バランスボード、Wiiリモコンを組み合わせた表示・操作確認は未実施。
+
+3文字用の一覧は、RemotePreviewとRemoteGameともに倍率0.28・縦間隔2.4で表示する（以前は0.18・1.5）。RemoteGameの保存済み筆跡一覧も同じ大きさにする。中央のリアルタイム筆跡は引き続き枠内に自動調整する。InputNameでは遠隔モードのお題が4文字以上なら開始を止め、修正を案内する。

@@ -3,7 +3,7 @@ using UnityEngine;
 // Hand-authored centre-line samples, in the same XY space as the tablet sender.
 public static class RemoteTestHandwriting
 {
-    public const string Word = "あいうえお";
+    public const string Word = "あいう";
 
     public static RemoteTemplateData Create()
     {
@@ -24,17 +24,6 @@ public static class RemoteTestHandwriting
         Add(data, 2, 0, -.25f,.85f, .02f,.76f, .32f,.69f);
         Add(data, 2, 1, -.65f,.22f, -.26f,.38f, .19f,.42f, .50f,.25f,
             .51f,-.08f, .36f,-.44f, .10f,-.69f, -.25f,-.85f);
-        // え: upper mark, then the diagonal and folded lower stroke.
-        Add(data, 3, 0, -.25f,.85f, .02f,.76f, .32f,.70f);
-        Add(data, 3, 1, -.63f,.29f, -.18f,.37f, .48f,.43f, .17f,.10f,
-            -.19f,-.27f, -.64f,-.73f, -.24f,-.35f, .05f,-.22f,
-            .21f,-.35f, .24f,-.64f, .46f,-.73f, .76f,-.67f);
-        // お: horizontal, the vertical and lower loop, then the upper-right mark.
-        Add(data, 4, 0, -.72f,.42f, -.35f,.44f, .06f,.52f, .32f,.59f);
-        Add(data, 4, 1, -.20f,.86f, -.22f,.36f, -.20f,-.16f, -.19f,-.65f,
-            -.40f,-.72f, -.65f,-.51f, -.53f,-.28f, -.20f,-.08f,
-            .20f,.04f, .56f,-.09f, .66f,-.38f, .51f,-.64f, .18f,-.73f);
-        Add(data, 4, 2, .47f,.77f, .65f,.65f, .80f,.46f);
         return data;
     }
 

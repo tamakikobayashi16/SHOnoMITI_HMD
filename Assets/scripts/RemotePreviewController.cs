@@ -55,16 +55,16 @@ public class RemotePreviewController : MonoBehaviour
         }
         BuildInterface();
         var paperSize = paper.GetComponent<Renderer>().bounds.size;
-        float top = galleryArea.GetComponent<Renderer>().bounds.max.y;
+        float top = galleryArea.GetComponent<Renderer>().bounds.max.y - 0.75f;
         for (int i = 0; i < RemoteHandwritingReceiver.MaxCharacters; i++)
         {
             var slot = Instantiate(backgroundPrefab, rightPanelParent, false);
             slot.name = "CharacterPreview_" + i;
-            slot.transform.position = new Vector3(rightPanelParent.position.x, top - i * 1.5f, rightPanelParent.position.z);
+            slot.transform.position = new Vector3(rightPanelParent.position.x, top - i * 2.4f, rightPanelParent.position.z);
             slot.transform.rotation = rightPanelParent.rotation;
             var size = slot.GetComponent<Renderer>().bounds.size;
             slot.transform.localScale = Vector3.Scale(slot.transform.localScale,
-                new Vector3(paperSize.x / size.x, paperSize.y / size.y, 1f) * 0.18f);
+                new Vector3(paperSize.x / size.x, paperSize.y / size.y, 1f) * 0.28f);
             foreach (var text in slot.GetComponentsInChildren<TMP_Text>()) text.text = "";
             previews.Add(slot);
         }
@@ -85,7 +85,7 @@ public class RemotePreviewController : MonoBehaviour
         if (promptWord.Length > RemoteHandwritingReceiver.MaxCharacters)
         {
             receiver.enabled = false;
-            message = "お題は最大5文字です。InputNameに戻って入力し直してください。";
+            message = "お題は最大3文字です。InputNameに戻って入力し直してください。";
             return;
         }
         trial = RemoteTrialRuntime.Begin(useLocalTestTemplate, controlPort, promptWord, participantId);

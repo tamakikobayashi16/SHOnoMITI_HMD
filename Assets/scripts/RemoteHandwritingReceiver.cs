@@ -10,7 +10,7 @@ using UnityEngine;
 /// <summary>Receives shodoVR DrawingUdpSender version 1 PenTablet packets.</summary>
 public class RemoteHandwritingReceiver : MonoBehaviour
 {
-    public const int MaxCharacters = 5;
+    public const int MaxCharacters = 3;
     [Range(0.5f, 2f)] public float displayScale = 1f;
     [Range(0.5f, 5f)] public float lineWidthMultiplier = 1f;
     [Tooltip("受信中も文字全体を紙の枠内に収めます。RemotePreview用。")]
@@ -199,7 +199,7 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         if (packet.eventType != "point") return;
         if (packet.character >= MaxCharacters)
         {
-            Error = "お手本は最大5文字です。5文字以内で書き直してください。";
+            Error = "お手本は最大3文字です。3文字以内で書き直してください。";
             return;
         }
         if (packet.character >= CharacterCount)

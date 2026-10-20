@@ -106,12 +106,12 @@ public static class RemoteSmoke
             Check(receiver.Error != null, "missing UDP packet reported");
             go.SetActive(false);
             go.SetActive(true);
-            Queue(0, "nextCharacter", 5, 0f);
+            Queue(0, "nextCharacter", 3, 0f);
             Tick();
-            Check(receiver.Error == null, "advance after fifth character is allowed");
-            Queue(1, "point", 5, 0f);
+            Check(receiver.Error == null, "advance after third character is allowed");
+            Queue(1, "point", 3, 0f);
             Tick();
-            Check(receiver.Error != null && receiver.CharacterCount == 0, "sixth character is rejected");
+            Check(receiver.Error != null && receiver.CharacterCount == 0, "fourth character is rejected");
             go.SetActive(false);
             var importedObject = new GameObject("ImportedTemplate");
             importedObject.SetActive(false);
@@ -191,7 +191,7 @@ public static class RemoteSmoke
             Check(replay.MoveNext() && imported.CharacterCount == 1 && !imported.HasFinished, "test handwriting starts progressively");
             while (replay.MoveNext()) { }
             var sample = imported.ExportTemplate(RemoteTestHandwriting.Word, true);
-            Check(imported.CharacterCount == 5 && imported.HasEveryCharacter() && sample.strokes.Count == 12, "five-character sample completes with all twelve strokes preserved");
+            Check(imported.CharacterCount == 3 && imported.HasEveryCharacter() && sample.strokes.Count == 7, "three-character sample completes with all seven strokes preserved");
             importedObject.SetActive(false);
             Debug.Log("REMOTE_SMOKE_PASS: " + checks + " checks");
             EditorApplication.Exit(0);

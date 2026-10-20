@@ -4,7 +4,7 @@ public partial class PreGameControl
 {
     [Header("Remote handwriting (shodoVR PenTablet)")]
     public bool useRemoteTemplate;
-    [Tooltip("UDP受信の代わりに座標で作ったテスト文字「あいうえお」を表示します。")]
+    [Tooltip("UDP受信の代わりに座標で作ったテスト文字「あいう」を表示します。")]
     public bool useLocalTestTemplate;
     [Tooltip("ローカルのお手本テスト中だけ、バランスボードの接続とキャリブレーションを省略します。")]
     public bool skipBalanceBoardInLocalTest = true;
