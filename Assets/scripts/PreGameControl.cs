@@ -753,7 +753,7 @@ public partial class PreGameControl : MonoBehaviour
                 LoadResultScene(silverResultSceneName);
             if (Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Keypad3))
                 LoadResultScene(bronzeResultSceneName);
-            if (Input.GetKeyDown(KeyCode.Alpha4) || Input.GetKeyDown(KeyCode.Keypad4))
+            if (!useRemoteTemplate && (Input.GetKeyDown(KeyCode.Alpha4) || Input.GetKeyDown(KeyCode.Keypad4)))
                 LoadResultScene(worstResultSceneName);
         }
 
@@ -2163,6 +2163,8 @@ public partial class PreGameControl : MonoBehaviour
         foreach (var a in _waitAnims) { if (a != null) { a.Update(0f); a.enabled = false; } }
 
         _readyForResult = true;
+        if (useRemoteTemplate)
+            ShowMessage("賞を選んでください：1＝金賞　2＝銀賞　3＝銅賞（テンキーも可）");
         yield break;
     }
 
@@ -2176,8 +2178,25 @@ public partial class PreGameControl : MonoBehaviour
 
     void LoadResultScene(string sceneName)
     {
-        if (string.IsNullOrEmpty(sceneName)) return;
+        if (string.IsNullOrEmpty(sceneName) || !_readyForResult) return;
+        if (!Application.CanStreamedLevelBeLoaded(sceneName))
+        {
+            ShowMessage("結果シーンがBuild Settingsに登録されていません。");
+            return;
+        }
+        _readyForResult = false;
         BuildResultTransferPayload();
+        if (useRemoteTemplate)
+        {
+            int rate = sceneName == goldResultSceneName ? 100 : sceneName == silverResultSceneName ? 90 : 80;
+            string award = rate == 100 ? "金賞" : rate == 90 ? "銀賞" : "銅賞";
+            var score = GlobalData.SceneTransferRoot.AddComponent<RemoteCooperativeResult>();
+            score.strokeCount = RemoteCooperativeResult.CountStrokes(remoteTemplate.ExportTemplate(currentPromptWord, useLocalTestTemplate));
+            score.multiplier = rate;
+            score.award = award;
+            score.font = timerText != null ? timerText.font : brushFont;
+            remoteTrial?.Recorder.Record("awardSelected", detail: award + ": " + score.strokeCount + " x " + rate + " = " + RemoteCooperativeResult.Points(score.strokeCount, rate));
+        }
         SceneManager.sceneLoaded += OnResultSceneLoaded;
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
