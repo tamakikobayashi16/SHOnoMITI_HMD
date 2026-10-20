@@ -18,8 +18,21 @@ public static class SavedInkOnPaper
                 Vector3 world = line.useWorldSpace ? line.GetPosition(i) : line.transform.TransformPoint(line.GetPosition(i));
                 Vector3 onPaper = paper.InverseTransformPoint(world);
                 onPaper.z = -0.015f;
-                points[i] = line.transform.InverseTransformPoint(paper.TransformPoint(onPaper));
+                points[i] = paper.TransformPoint(onPaper);
             }
+            // A camera-facing ribbon can straddle the paper even when its centerline
+            // is in front. Keep the full stroke width parallel to the paper instead.
+            line.transform.rotation = paper.rotation;
+            // Saving already scales widthMultiplier for the thumbnail. TransformZ also
+            // scales the ribbon with its transform; avoid shrinking the width twice.
+            if (line.alignment != LineAlignment.TransformZ)
+            {
+                var parentScale = line.transform.parent != null ? line.transform.parent.lossyScale : Vector3.one;
+                line.transform.localScale = new Vector3(1f / parentScale.x, 1f / parentScale.y, 1f / parentScale.z);
+            }
+            line.alignment = LineAlignment.TransformZ;
+            for (int i = 0; i < points.Length; i++)
+                points[i] = line.transform.InverseTransformPoint(points[i]);
             line.useWorldSpace = false;
             line.SetPositions(points);
         }
