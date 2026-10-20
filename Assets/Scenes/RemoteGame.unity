@@ -608,7 +608,7 @@ MonoBehaviour:
   remoteListenPort: 5005
   remoteSourceHalfSize: {x: 1.92, y: 1.08}
   remoteTemplateDisplayScale: 1.65
-  remoteTemplateLineWidthMultiplier: 2.5
+  remoteTemplateLineWidthMultiplier: 4
   moveArea: {fileID: 8378556065508927080, guid: 8d2564179519f29499cfd56c1df7ea74, type: 3}
   paperObject: {fileID: 8378556065508927080, guid: 8d2564179519f29499cfd56c1df7ea74, type: 3}
   sampleWords: []

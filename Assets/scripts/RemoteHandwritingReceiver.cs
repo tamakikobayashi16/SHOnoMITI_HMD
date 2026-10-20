@@ -11,6 +11,8 @@ using UnityEngine;
 public class RemoteHandwritingReceiver : MonoBehaviour
 {
     public const int MaxCharacters = 3;
+    // The texture has an inset printed border; fit ink inside it, not the outer quad.
+    const float InkFrameFraction = 0.76f;
     [Range(0.5f, 2f)] public float displayScale = 1f;
     [Range(0.5f, 5f)] public float lineWidthMultiplier = 1f;
     [Tooltip("受信中も文字全体を紙の枠内に収めます。RemotePreview用。")]
@@ -399,10 +401,10 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         if (completedBounds.TryGetValue(stroke.character, out var inkBounds))
         {
             sourceCenter = inkBounds.center;
-            // Include the round stroke caps and leave a 5% margin on every edge.
+            // Include round caps and reserve the printed border plus a safety margin.
             float fit = Mathf.Min(bounds.size.x / (inkBounds.size.x + width),
                 bounds.size.y / (inkBounds.size.y + width));
-            scale = fit * 0.9f * Mathf.Clamp(displayScale / 1.65f, 0.1f, 1f);
+            scale = fit * InkFrameFraction * Mathf.Clamp(displayScale / 1.65f, 0.1f, 1f);
         }
         if (fitWhileReceiving && liveBounds.TryGetValue(stroke.character, out var liveInk))
         {
@@ -410,7 +412,7 @@ public class RemoteHandwritingReceiver : MonoBehaviour
             // The printed frame is inset from the paper edge. Include round caps,
             // and avoid magnifying the first dot or short stroke to fill the sheet.
             float fit = Mathf.Min(bounds.size.x / (liveInk.size.x + width),
-                bounds.size.y / (liveInk.size.y + width)) * 0.8f;
+                bounds.size.y / (liveInk.size.y + width)) * InkFrameFraction;
             float nominal = Mathf.Min(bounds.size.x / (2f * Mathf.Max(0.001f, sourceHalfSize.x)),
                 bounds.size.y / (2f * Mathf.Max(0.001f, sourceHalfSize.y))) * 0.9f * Mathf.Clamp(displayScale, 0.5f, 2f);
             scale = Mathf.Min(nominal, fit);

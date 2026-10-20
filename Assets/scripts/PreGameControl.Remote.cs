@@ -13,7 +13,7 @@ public partial class PreGameControl
     public Vector2 remoteSourceHalfSize = new Vector2(1.92f, 1.08f);
     [Tooltip("なぞるお手本の表示倍率。1が従来の大きさです。")]
     [Range(0.5f, 2f)] public float remoteTemplateDisplayScale = 1.65f;
-    [Range(0.5f, 5f)] public float remoteTemplateLineWidthMultiplier = 2.5f;
+    [Range(0.5f, 5f)] public float remoteTemplateLineWidthMultiplier = 4f;
     RemoteHandwritingReceiver remoteTemplate;
     RemoteTrialRuntime remoteTrial;
     int remoteTraceStroke = -1;

@@ -609,7 +609,7 @@ MonoBehaviour:
   nextSceneName: RemoteGame
   completedDisplaySeconds: 1
   templateDisplayScale: 1.65
-  templateLineWidthMultiplier: 2.5
+  templateLineWidthMultiplier: 4
   backgroundPrefab: {fileID: 6679367314865922125, guid: 9349684e5080dcf48a6f4daefbf79a7c, type: 3}
   rightPanelParent: {fileID: 841066083}
   galleryArea: {fileID: 1844862191}

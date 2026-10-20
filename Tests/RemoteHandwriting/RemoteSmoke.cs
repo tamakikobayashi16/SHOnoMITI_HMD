@@ -142,6 +142,10 @@ public static class RemoteSmoke
                 "large offset handwriting fits paper at character completion");
             Check(Math.Abs((fittedLine.GetPosition(0).x + fittedLine.GetPosition(1).x) / 2f - paperBounds.center.x) < 0.001f,
                 "completed handwriting is centered");
+            imported.displayScale = 2f;
+            imported.lineWidthMultiplier = 4f;
+            Tick();
+            Check(InsideFrame(CurrentLiveLines()[0], paperBounds), "completed oversized guide fits printed frame at maximum scale with thicker ink");
             Queue(4, "clearCharacter", 0, 0f);
             Queue(5, "point", 0, 10f);
             Tick();
@@ -149,7 +153,7 @@ public static class RemoteSmoke
             importedObject.SetActive(false);
             importedObject.SetActive(true);
             imported.fitWhileReceiving = true;
-            imported.lineWidthMultiplier = 2.5f;
+            imported.lineWidthMultiplier = 4f;
             imported.ShowCharacter(0);
             Queue(0, "point", 0, 10f);
             Queue(1, "point", 0, 30f);

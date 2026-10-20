@@ -18,7 +18,7 @@ public class RemotePreviewController : MonoBehaviour
     public float completedDisplaySeconds = 1f;
     [Tooltip("お手本の表示倍率。1が従来の大きさです。")]
     [Range(0.5f, 2f)] public float templateDisplayScale = 1.65f;
-    [Range(0.5f, 5f)] public float templateLineWidthMultiplier = 2.5f;
+    [Range(0.5f, 5f)] public float templateLineWidthMultiplier = 4f;
     RemoteHandwritingReceiver receiver;
     readonly List<GameObject> previews = new List<GameObject>();
     string promptWord, message;
