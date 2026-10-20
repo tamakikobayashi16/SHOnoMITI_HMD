@@ -2,6 +2,7 @@ using UnityEngine;
 
 public static class SavedInkOnPaper
 {
+    static Material inkMaterial;
     // Keep ink in the paper's local plane so gallery/result movement carries both together.
     public static void Align(GameObject group)
     {
@@ -12,6 +13,11 @@ public static class SavedInkOnPaper
         foreach (var animator in paper.GetComponentsInChildren<Animator>(true)) animator.enabled = false;
         foreach (var line in group.GetComponentsInChildren<LineRenderer>(true))
         {
+            // Resources keeps the shader in player builds. Standard's back-face culling
+            // drops folded triangles in dense handwriting, even on a flat paper plane.
+            if (inkMaterial == null)
+                inkMaterial = new Material(Resources.Load<Shader>("SavedInk"));
+            line.sharedMaterial = inkMaterial;
             var points = new Vector3[line.positionCount];
             for (int i = 0; i < points.Length; i++)
             {
