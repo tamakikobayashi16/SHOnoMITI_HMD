@@ -15,6 +15,8 @@ public sealed class RemoteTrialLink : IDisposable
         public int version = 1;
         public string kind, peerId, hostId, trialId, prompt, participantId, phase, error;
         public long revision;
+        public string topicId, topicText;
+        public long topicRevision;
         public bool hostReady, teacherReady, deviceReady;
     }
 
@@ -26,6 +28,7 @@ public sealed class RemoteTrialLink : IDisposable
     string peerIdentity;
     float lastSeen = -1f, openedAt, nextHello;
     long revision, lastRevision = -1;
+    long receivedTopicRevision = -1;
     public Message State { get; private set; } = new Message { phase = "waiting" };
     public bool LocalReady { get; set; }
     public bool DeviceReady { get; set; }
@@ -60,6 +63,7 @@ public sealed class RemoteTrialLink : IDisposable
         PeerError = null;
         openedAt = Time.realtimeSinceStartup;
         lastSeen = -1f;
+        receivedTopicRevision = -1;
         SendStatus();
     }
 
@@ -88,9 +92,22 @@ public sealed class RemoteTrialLink : IDisposable
                     if (message.kind != "hello" || string.IsNullOrEmpty(message.peerId)) continue;
                     // Keep one remote PC per live connection; allow a restarted sender after timeout.
                     if (peerIdentity != null && (message.peerId != peerIdentity || !from.Equals(peer)) && Connected) continue;
+                    bool newPeer = message.peerId != peerIdentity;
+                    if (newPeer) receivedTopicRevision = -1;
                     peer = from;
                     peerIdentity = message.peerId;
                     lastSeen = Time.realtimeSinceStartup;
+                    // The question is display metadata, separate from the answer/prompt.
+                    bool topicForThisTrial = message.trialId == State.trialId ||
+                        (newPeer && string.IsNullOrEmpty(message.trialId) && State.phase == "waiting");
+                    if (topicForThisTrial && message.topicRevision > receivedTopicRevision && message.topicRevision > 0 &&
+                        !string.IsNullOrEmpty(message.topicId) && message.topicId.Length <= 64 &&
+                        !string.IsNullOrEmpty(message.topicText) && message.topicText.Length <= 256)
+                    {
+                        State.topicId = message.topicId;
+                        State.topicText = message.topicText;
+                        State.topicRevision = receivedTopicRevision = message.topicRevision;
+                    }
                     State.deviceReady = message.deviceReady;
                     PeerError = message.trialId == State.trialId ? message.error : null;
                     State.teacherReady = message.trialId == State.trialId && message.teacherReady && message.deviceReady;

@@ -99,6 +99,11 @@ public class RemotePreviewController : MonoBehaviour
     void BuildInterface()
     {
         ConfigureText(headingText, new Vector2(0.5f, 1f), new Vector2(0, -55), new Vector2(1100, 80), 48);
+        headingText.richText = false;
+        headingText.enableAutoSizing = true;
+        headingText.fontSizeMin = 24;
+        headingText.fontSizeMax = 48;
+        headingText.overflowMode = TextOverflowModes.Ellipsis;
         ConfigureText(statusText, new Vector2(0.5f, 0f), new Vector2(0, 115), new Vector2(1500, 90), 30);
         readyButton = CreateButton("準備完了", new Vector2(-140, 40), () => {
             if (trial?.Link == null || !trial.Link.Connected || failed || transitioning) return;
@@ -147,6 +152,8 @@ public class RemotePreviewController : MonoBehaviour
     {
         if (headingText == null) return;
         headingText.text = "遠隔のお手本" + (receiver != null && receiver.CharacterCount > 0 ? "　" + receiver.CharacterCount + "文字目" : "");
+        string topic = trial?.Link?.State.topicText;
+        if (!string.IsNullOrEmpty(topic)) headingText.text = "お題：" + topic;
         statusText.text = message ?? "準備中…";
         readyButton.gameObject.SetActive(!useLocalTestTemplate && !failed && !transitioning &&
             trial?.Link != null && trial.Link.Connected && !trial.Link.LocalReady);
