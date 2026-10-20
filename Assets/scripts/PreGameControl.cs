@@ -2088,6 +2088,7 @@ public partial class PreGameControl : MonoBehaviour
         TryPlayAnimator(galleryAnimator, galleryAnimTrigger, galleryAnimStateName);
         TryPlayAnimator(rightPanelAnimator, rightPanelAnimTrigger, rightPanelAnimStateName);
         TryPlayAnimator(moveAreaAnimator, moveAreaAnimTrigger, moveAreaAnimStateName);
+        remoteCompletionAlign = useRemoteTemplate;
     }
 
     void TryPlayAnimator(Animator anim, string triggerName, string stateName)
@@ -2202,8 +2203,8 @@ public partial class PreGameControl : MonoBehaviour
         BuildResultTransferPayload();
         if (useRemoteTemplate)
         {
-            int rate = sceneName == goldResultSceneName ? 100 : sceneName == silverResultSceneName ? 90 : 80;
-            string award = rate == 100 ? "金賞" : rate == 90 ? "銀賞" : "銅賞";
+            int rate = sceneName == goldResultSceneName ? 100 : sceneName == silverResultSceneName ? 80 : 60;
+            string award = sceneName == goldResultSceneName ? "金賞" : sceneName == silverResultSceneName ? "銀賞" : "銅賞";
             var score = GlobalData.SceneTransferRoot.AddComponent<RemoteCooperativeResult>();
             score.strokeCount = RemoteCooperativeResult.CountStrokes(remoteTemplate.ExportTemplate(currentPromptWord, useLocalTestTemplate));
             score.multiplier = rate;

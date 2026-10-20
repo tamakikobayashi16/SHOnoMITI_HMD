@@ -2,6 +2,29 @@ using UnityEngine;
 
 public partial class PreGameControl
 {
+    bool remoteCompletionAlign;
+
+    void AlignRemoteCompletionDepth()
+    {
+        if (!remoteCompletionAlign || galleryAnimator == null || rightPanelParent == null) return;
+        // The shared right-hand clip moves toward the camera by two units.
+        // Keep both columns on one depth plane so perspective cannot offset their rows/sizes.
+        var position = rightPanelParent.position;
+        position.z = galleryAnimator.transform.position.z;
+        // Saved papers and template slots can have different offsets from their roots.
+        // Align their visible top row, rather than relying on the roots' matching Y values.
+        if (savedGroups.Count > 0 && rightSlots.Count > 0)
+        {
+            var rightPaper = rightSlots[0].GetComponent<Renderer>();
+            foreach (var leftPaper in savedGroups[0].GetComponentsInChildren<MeshRenderer>())
+            {
+                if (!leftPaper.name.StartsWith("Saved_MoveArea_") || rightPaper == null) continue;
+                position.y += leftPaper.bounds.center.y - rightPaper.bounds.center.y;
+                break;
+            }
+        }
+        rightPanelParent.position = position;
+    }
     [Header("Remote handwriting (shodoVR PenTablet)")]
     public bool useRemoteTemplate;
     [Tooltip("UDP受信の代わりに座標で作ったテスト文字「あいう」を表示します。")]
@@ -22,6 +45,7 @@ public partial class PreGameControl
 
     void LateUpdate()
     {
+        AlignRemoteCompletionDepth();
         if (!useRemoteTemplate || timerText == null || moveArea == null) return;
         var paperRenderer = moveArea.GetComponent<Renderer>();
         var camera = Camera.main;
