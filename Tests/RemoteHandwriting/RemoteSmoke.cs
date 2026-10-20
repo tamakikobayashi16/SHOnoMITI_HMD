@@ -14,6 +14,7 @@ public static class RemoteSmoke
     static int checks;
     public static void Run()
     {
+        UnityEditor.SceneManagement.EditorSceneManager.NewScene(UnityEditor.SceneManagement.NewSceneSetup.EmptyScene, UnityEditor.SceneManagement.NewSceneMode.Single);
         EditorSettings.enterPlayModeOptionsEnabled = true;
         EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload;
         EditorApplication.playModeStateChanged += Changed;
@@ -54,6 +55,21 @@ public static class RemoteSmoke
             Check(receiver.CharacterCount == 2 && receiver.HasEveryCharacter(), "previous character retained");
             Check(receiver.Error == null, "reordering recovered without loss");
             Check(previews[0].GetComponentInChildren<LineRenderer>().positionCount == 1, "first preview retained");
+            var previewLine = previews[0].GetComponentInChildren<LineRenderer>();
+            var localPoint = previewLine.GetPosition(0);
+            var oldWorld = previewLine.transform.TransformPoint(localPoint);
+            previews[0].transform.position += new Vector3(3, 2, 0);
+            Tick();
+            Check(!previewLine.useWorldSpace && Vector3.Distance(previewLine.transform.TransformPoint(previewLine.GetPosition(0)),
+                oldWorld + new Vector3(3, 2, 0)) < 0.001f, "preview ink follows paper translation without new packets");
+            previews[0].transform.rotation = Quaternion.Euler(0, 0, 25);
+            previews[0].transform.localScale = Vector3.one * 1.4f;
+            Tick();
+            Check(Vector3.Distance(previewLine.GetPosition(0), localPoint) < 0.001f,
+                "preview animation preserves paper-relative points during rotation and scale");
+            previews[0].transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            previews[0].transform.localScale = Vector3.one;
+
             Queue(2, "point", 1, 0.5f);
             Tick();
             Check(previews[1].GetComponentInChildren<LineRenderer>().positionCount == 1, "duplicate ignored");

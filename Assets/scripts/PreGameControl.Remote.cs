@@ -96,7 +96,13 @@ public partial class PreGameControl
     {
         // Scene references previously pointed at the prefab asset instead of its instance.
         var scenePaper = GameObject.Find("MoveArea");
-        if (scenePaper != null) moveArea = paperObject = scenePaper;
+        if (scenePaper != null)
+        {
+            moveArea = paperObject = scenePaper;
+            // Match RemotePreview: mesh paper belongs in world space, not an overlay Canvas.
+            scenePaper.transform.SetParent(null, false);
+            scenePaper.transform.position = new Vector3(0f, 0f, 3f);
+        }
         var completedTemplate = GlobalData.RemoteTemplate;
         GlobalData.RemoteTemplate = null;
         if (completedTemplate == null && !useLocalTestTemplate)

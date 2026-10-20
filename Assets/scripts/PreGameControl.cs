@@ -1800,6 +1800,16 @@ public partial class PreGameControl : MonoBehaviour
         GameObject moveClone = Instantiate(moveArea);
         moveClone.name = "Saved_MoveArea_" + savedCount;
         moveClone.transform.SetParent(parent, true);
+        if (useRemoteTemplate)
+        {
+            // Instantiate detaches a Canvas child: restore the source world pose explicitly.
+            foreach (var animator in moveClone.GetComponentsInChildren<Animator>(true)) animator.enabled = false;
+            moveClone.transform.SetPositionAndRotation(moveArea.transform.position, moveArea.transform.rotation);
+            Vector3 sourceSize = moveArea.transform.lossyScale;
+            Vector3 parentSize = parent.lossyScale;
+            moveClone.transform.localScale = new Vector3(sourceSize.x / parentSize.x,
+                sourceSize.y / parentSize.y, sourceSize.z / parentSize.z);
+        }
         moveClone.isStatic = false;
 
         foreach (var tr in moveClone.GetComponentsInChildren<Transform>(true))
@@ -2227,6 +2237,9 @@ public partial class PreGameControl : MonoBehaviour
             copy.transform.SetParent(root.transform, true);
         }
 
+        // Award backdrops sit in front of z=0. Move the transferred paper AND ink
+        // together, leaving the existing award scene and its animations untouched.
+        if (useRemoteTemplate) root.transform.position += Vector3.back * galleryStrokeZOffset;
         root.SetActive(false);
     }
 

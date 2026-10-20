@@ -381,7 +381,9 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         go.transform.SetParent(parent, false);
         var line = go.AddComponent<LineRenderer>();
         line.sharedMaterial = material;
-        line.useWorldSpace = true;
+        // Preview lines are children of their paper, so gallery animations must
+        // move their points with the paper rather than leave them in world space.
+        line.useWorldSpace = false;
         line.positionCount = 0;
         line.startColor = line.endColor = color;
         line.numCapVertices = line.numCornerVertices = 8;
@@ -424,7 +426,8 @@ public class RemoteHandwritingReceiver : MonoBehaviour
         int first = line.positionCount;
         // RedrawCharacter resets the count when the shared character layout changes.
         line.positionCount = points.Count;
-        for (int i = first; i < points.Count; i++) line.SetPosition(i, center + (points[i] - sourceCenter) * scale);
+        for (int i = first; i < points.Count; i++)
+            line.SetPosition(i, line.transform.InverseTransformPoint(center + (points[i] - sourceCenter) * scale));
     }
 
     static bool Finite(float value) { return !float.IsNaN(value) && !float.IsInfinity(value); }
